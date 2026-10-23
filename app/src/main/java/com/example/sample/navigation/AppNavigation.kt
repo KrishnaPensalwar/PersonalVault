@@ -19,7 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.example.sample.Greeting
+import com.example.sample.storage.StorageScreen
+import com.example.sample.dashboard.DashboardScreen
+import com.example.sample.password.PasswordScreen
+import com.example.sample.family.FamilyScreen
 
 @Composable
 fun AppNavigation(
@@ -46,18 +49,18 @@ fun AppNavigation(
             }
         }, entryProvider = entryProvider {
             entry<Destinations.Dashboard> {
-                Greeting("Home")
+                DashboardScreen()
             }
 
             entry<Destinations.Password> {
-                Greeting("Password")
+                PasswordScreen()
             }
 
             entry<Destinations.Storage> {
-                Greeting("Storage")
+                StorageScreen()
             }
             entry<Destinations.Family> {
-                Greeting("Family")
+                FamilyScreen()
             }
         })
     }
