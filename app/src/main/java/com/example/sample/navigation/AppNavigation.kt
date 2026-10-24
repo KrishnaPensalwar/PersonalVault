@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.sample.storage.StorageScreen
 import com.example.sample.dashboard.DashboardScreen
@@ -28,15 +29,12 @@ import com.example.sample.family.FamilyScreen
 fun AppNavigation(
     modifier: Modifier = Modifier
 ) {
-    val backStack = remember {
-        mutableStateListOf<Destinations>(
-            Destinations.Dashboard
-        )
-    }
+    val backStack = rememberNavBackStack(Destinations.Dashboard)
     Scaffold(
         modifier = Modifier.fillMaxSize(), bottomBar = {
             BottomBar(
-                currentDestination = backStack.last(), onDestinationSelected = { destination ->
+                currentDestination = backStack.last() as Destinations,
+                onDestinationSelected = { destination ->
                     if (backStack.last() != destination) {
                         backStack.add(destination)
                     }

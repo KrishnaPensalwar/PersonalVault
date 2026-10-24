@@ -1,8 +1,10 @@
 package com.example.sample.navigation
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-sealed interface Destinations {
+@Serializable
+sealed interface Destinations : NavKey{
 
     @Serializable
     data object Dashboard : Destinations
