@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,7 +94,7 @@ fun StorageScreen(
     LaunchedEffect(searchQuery) {
         viewModel.getDocuments(searchQuery)
     }
-    val documents by viewModel.documents.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val backStack = LocalBackStack.current
 
     val sheetState = rememberModalBottomSheetState(
@@ -193,20 +194,72 @@ fun StorageScreen(
             )
         )
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            items(documents) { doc ->
-                StorageDocumentCard(
-                    document = doc,
-                    onClick = {
-                        backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
+        when (val state = uiState) {
+            is StorageUiState.Loading -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Text("Loading Documents...")
+                }
+            }
+
+            is StorageUiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = state.message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.getDocuments(searchQuery) }
+                    ) {
+                        Text("Retry")
                     }
-                )
-                Spacer(Modifier.height(8.dp))
+                }
+            }
+
+            is StorageUiState.Success -> {
+                if (state.documents.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (searchQuery.isBlank()) "No documents saved yet" else "No matching documents found",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp)
+                    ) {
+                        items(state.documents) { doc ->
+                            StorageDocumentCard(
+                                document = doc,
+                                onClick = {
+                                    backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
+                                }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+                }
             }
         }
     }

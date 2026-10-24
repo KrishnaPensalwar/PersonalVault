@@ -30,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -43,7 +42,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.LocalBackStack
+import com.example.sample.storage.data.VaultDocumentEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
@@ -54,24 +55,78 @@ fun DocumentDetailScreen(
     viewModel: DocumentDetailViewModel = koinViewModel()
 ) {
     val backStack = LocalBackStack.current
-    val document by viewModel.documentState.collectAsState()
-
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(id) {
         viewModel.loadDocument(id)
     }
 
-    if (document == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    when (val state = uiState) {
+        is DocumentDetailUiState.Loading -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+                Text("Loading Document Details...")
+            }
         }
-        return
-    }
 
-    val doc = document!!
+        is DocumentDetailUiState.Error -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { viewModel.loadDocument(id) }) {
+                        Text("Retry")
+                    }
+                    TextButton(onClick = { backStack.removeLastOrNull() }) {
+                        Text("Go Back")
+                    }
+                }
+            }
+        }
+
+        is DocumentDetailUiState.Success -> {
+            DocumentDetailContent(
+                doc = state.document,
+                onUpdateName = { newName ->
+                    viewModel.updateDocumentName(id, newName)
+                },
+                onDelete = {
+                    viewModel.deleteDocument(id, onSuccess = {
+                        backStack.removeLastOrNull()
+                    })
+                },
+                onBack = {
+                    backStack.removeLastOrNull()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DocumentDetailContent(
+    doc: VaultDocumentEntity,
+    onUpdateName: (String) -> Unit,
+    onDelete: () -> Unit,
+    onBack: () -> Unit
+) {
     var editableName by remember(doc.name) { mutableStateOf(doc.name) }
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val nameChanged = editableName.isNotBlank() && editableName != doc.name
 
@@ -112,7 +167,7 @@ fun DocumentDetailScreen(
                         if (nameChanged) {
                             showDiscardDialog = true
                         } else {
-                            backStack.removeLastOrNull()
+                            onBack()
                         }
                     }
                 )
@@ -182,14 +237,13 @@ fun DocumentDetailScreen(
 
             Button(
                 onClick = {
-                    viewModel.updateDocumentName(id, editableName)
+                    onUpdateName(editableName)
                 },
                 enabled = nameChanged,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Update Name")
             }
-
         }
     }
 
@@ -202,7 +256,7 @@ fun DocumentDetailScreen(
                 TextButton(
                     onClick = {
                         showDiscardDialog = false
-                        backStack.removeLastOrNull()
+                        onBack()
                     }
                 ) {
                     Text("Discard")
@@ -220,9 +274,7 @@ fun DocumentDetailScreen(
         DeleteConfirmationDialog(
             onConfirm = {
                 showDeleteDialog = false
-                viewModel.deleteDocument(id, onSuccess = {
-                    backStack.removeLastOrNull()
-                })
+                onDelete()
             },
             onDismiss = {
                 showDeleteDialog = false

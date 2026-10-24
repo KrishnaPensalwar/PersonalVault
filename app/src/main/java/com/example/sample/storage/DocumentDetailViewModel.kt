@@ -9,30 +9,54 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+sealed interface DocumentDetailUiState {
+    data object Loading : DocumentDetailUiState
+    data class Success(val document: VaultDocumentEntity) : DocumentDetailUiState
+    data class Error(val message: String) : DocumentDetailUiState
+}
+
 class DocumentDetailViewModel(
     private val repository: VaultDocumentImpl
 ) : ViewModel() {
 
-    private val _documentState = MutableStateFlow<VaultDocumentEntity?>(null)
-    val documentState: StateFlow<VaultDocumentEntity?> = _documentState.asStateFlow()
+    private val _uiState = MutableStateFlow<DocumentDetailUiState>(DocumentDetailUiState.Loading)
+    val uiState: StateFlow<DocumentDetailUiState> = _uiState.asStateFlow()
 
     fun loadDocument(id: String) {
         viewModelScope.launch {
-            _documentState.value = repository.getDocumentById(id)
+            _uiState.value = DocumentDetailUiState.Loading
+            try {
+                val document = repository.getDocumentById(id)
+                if (document != null) {
+                    _uiState.value = DocumentDetailUiState.Success(document)
+                } else {
+                    _uiState.value = DocumentDetailUiState.Error("Document not found")
+                }
+            } catch (e: Exception) {
+                _uiState.value = DocumentDetailUiState.Error(e.message ?: "Failed to load document")
+            }
         }
     }
 
     fun updateDocumentName(id: String, newName: String) {
         viewModelScope.launch {
-            repository.updateDocumentDetails(id, newName)
-            loadDocument(id)
+            try {
+                repository.updateDocumentDetails(id, newName)
+                loadDocument(id)
+            } catch (e: Exception) {
+                _uiState.value = DocumentDetailUiState.Error(e.message ?: "Failed to update document")
+            }
         }
     }
 
     fun deleteDocument(id: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            repository.deleteDocumentById(id)
-            onSuccess()
+            try {
+                repository.deleteDocumentById(id)
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.value = DocumentDetailUiState.Error(e.message ?: "Failed to delete document")
+            }
         }
     }
 }
