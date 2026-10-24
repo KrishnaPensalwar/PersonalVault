@@ -14,31 +14,30 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.sample.storage.StorageScreen
 import com.example.sample.dashboard.DashboardScreen
-import com.example.sample.password.PasswordScreen
 import com.example.sample.family.FamilyScreen
+import com.example.sample.password.PasswordDetailScreen
+import com.example.sample.password.PasswordFormScreen
+import com.example.sample.password.PasswordScreen
 import com.example.sample.storage.DocumentDetailScreen
+import com.example.sample.storage.StorageScreen
 
 @Composable
 fun AppNavigation(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(Destinations.Dashboard)
     val currentDestination = backStack.last() as Destinations
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(), bottomBar = {
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
             if (currentDestination.showBottomBar) {
                 BottomBar(
                     currentDestination = currentDestination,
@@ -49,69 +48,84 @@ fun AppNavigation(
                     }
                 )
             }
-        }) { innerPadding ->
+        },
+    ) { innerPadding ->
 
         CompositionLocalProvider(
-            LocalBackStack provides backStack
+            LocalBackStack provides backStack,
         ) {
-            NavDisplay(backStack = backStack, modifier = modifier.padding(innerPadding), onBack = {
-                if (backStack.size > 1) {
-                    backStack.removeLastOrNull()
-                }
-            }, entryProvider = entryProvider {
-                entry<Destinations.Dashboard> {
-                    DashboardScreen()
-                }
+            NavDisplay(
+                backStack = backStack,
+                modifier = modifier.padding(innerPadding),
+                onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                entryProvider = entryProvider {
 
-                entry<Destinations.Password> {
-                    PasswordScreen()
-                }
+                    entry<Destinations.Dashboard> {
+                        DashboardScreen()
+                    }
 
-                entry<Destinations.Storage> {
-                    StorageScreen()
-                }
-                entry<Destinations.Family> {
-                    FamilyScreen()
-                }
-                entry<Destinations.DocumentDetailScreen> { document ->
-                    DocumentDetailScreen(id = document.id)
-                }
-            })
+                    entry<Destinations.Password> {
+                        PasswordScreen()
+                    }
+
+                    entry<Destinations.Storage> {
+                        StorageScreen()
+                    }
+
+                    entry<Destinations.Family> {
+                        FamilyScreen()
+                    }
+
+                    entry<Destinations.DocumentDetailScreen> { document ->
+                        DocumentDetailScreen(id = document.id)
+                    }
+
+                    // ── Password sub-screens ──────────────────────────────────
+                    entry<Destinations.PasswordForm> { dest ->
+                        PasswordFormScreen(passwordId = dest.passwordId)
+                    }
+
+                    entry<Destinations.PasswordDetail> { dest ->
+                        PasswordDetailScreen(passwordId = dest.passwordId)
+                    }
+                },
+            )
         }
     }
 }
 
 @Composable
 fun BottomBar(
-    currentDestination: Destinations, onDestinationSelected: (Destinations) -> Unit
+    currentDestination: Destinations,
+    onDestinationSelected: (Destinations) -> Unit,
 ) {
     val items = listOf(
-        BottomNavItem(
-            destination = Destinations.Dashboard, label = "Dashboard", icon = Icons.Default.Home
-        ), BottomNavItem(
-            destination = Destinations.Storage, label = "Storage", icon = Icons.Default.Storage
-        ), BottomNavItem(
-            destination = Destinations.Password, label = "Password", icon = Icons.Default.Password
-        ), BottomNavItem(
-            destination = Destinations.Family, label = "Family", icon = Icons.Default.FamilyRestroom
-        )
+        BottomNavItem(Destinations.Dashboard, "Dashboard", Icons.Default.Home),
+        BottomNavItem(Destinations.Storage, "Storage", Icons.Default.Storage),
+        BottomNavItem(Destinations.Password, "Password", Icons.Default.Password),
+        BottomNavItem(Destinations.Family, "Family", Icons.Default.FamilyRestroom),
     )
 
     NavigationBar {
         items.forEach { item ->
-            NavigationBarItem(selected = currentDestination == item.destination, onClick = {
-                onDestinationSelected(item.destination)
-            }, icon = {
-                Image(
-                    imageVector = item.icon, contentDescription = item.label
-                )
-            }, label = {
-                Text(item.label)
-            })
+            NavigationBarItem(
+                selected = currentDestination == item.destination,
+                onClick = { onDestinationSelected(item.destination) },
+                icon = {
+                    Image(imageVector = item.icon, contentDescription = item.label)
+                },
+                label = { Text(item.label) },
+            )
         }
     }
 }
 
 data class BottomNavItem(
-    val destination: Destinations, val label: String, val icon: ImageVector
+    val destination: Destinations,
+    val label: String,
+    val icon: ImageVector,
 )
