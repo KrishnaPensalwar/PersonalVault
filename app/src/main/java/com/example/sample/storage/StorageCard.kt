@@ -3,9 +3,7 @@ package com.example.sample.storage
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
-import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,12 +34,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import com.example.sample.storage.data.VaultDocumentEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
-import androidx.core.graphics.createBitmap
 
 @Composable
 fun StorageDocumentCard(
@@ -81,7 +79,7 @@ fun StorageDocumentCard(
             // Left: document preview
             Box(
                 modifier = Modifier
-                    .size(width = 88.dp, height = 100.dp)
+                    .size(width = 88.dp, height = 80.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         MaterialTheme.colorScheme.surfaceVariant

@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,12 +24,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -38,7 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -51,10 +57,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
@@ -75,13 +84,16 @@ fun StorageScreen(
     var selectedDocument by remember { mutableStateOf<SelectedDocument?>(null) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var editableName by remember { mutableStateOf("") }
-    
+
     var showBottomSheet by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isConfirmedToDismiss by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    val documents by viewModel.documents.collectAsState()
-
+    LaunchedEffect(searchQuery) {
+        viewModel.getDocuments(searchQuery)
+    }
+    val documents by viewModel.documents.collectAsStateWithLifecycle()
     val backStack = LocalBackStack.current
 
     val sheetState = rememberModalBottomSheetState(
@@ -112,7 +124,7 @@ fun StorageScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(horizontal = 24.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -134,11 +146,58 @@ fun StorageScreen(
                 Text("Add")
             }
         }
+        Spacer(Modifier.height(8.dp))
+
+        val focusManager = LocalFocusManager.current
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { query ->
+                searchQuery = query
+                viewModel.getDocuments(query)
+            },
+            modifier = Modifier
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            label = {
+                Text("Search documents")
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search documents"
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            searchQuery = ""
+                            viewModel.getDocuments()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear search"
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            )
+        )
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
             items(documents) { doc ->
                 StorageDocumentCard(
@@ -222,7 +281,7 @@ fun DocumentSaveBottomSheet(
     onSave: () -> Unit
 ) {
     val context = LocalContext.current
-    
+
     val preview by produceState<Bitmap?>(
         initialValue = null,
         key1 = selectedUri,
@@ -230,7 +289,11 @@ fun DocumentSaveBottomSheet(
     ) {
         value = withContext(Dispatchers.IO) {
             if (selectedUri != null && selectedDocument != null) {
-                loadDocumentPreviewFromUri(context, selectedUri.toString(), selectedDocument.mimeType)
+                loadDocumentPreviewFromUri(
+                    context,
+                    selectedUri.toString(),
+                    selectedDocument.mimeType
+                )
             } else null
         }
     }
@@ -293,7 +356,9 @@ fun DocumentSaveBottomSheet(
             if (selectedDocument != null) {
                 val sizeKb = (selectedDocument.size ?: 0) / 1024.0
                 Text(
-                    text = "Type: ${selectedDocument.mimeType?.substringAfter("/")?.uppercase() ?: "UNKNOWN"} • Size: %.2f KB".format(sizeKb),
+                    text = "Type: ${
+                        selectedDocument.mimeType?.substringAfter("/")?.uppercase() ?: "UNKNOWN"
+                    } • Size: %.2f KB".format(sizeKb),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -347,6 +412,7 @@ fun loadDocumentPreviewFromUri(
                     BitmapFactory.decodeStream(stream)
                 }
             }
+
             mimeType == "application/pdf" -> {
                 val fd = context.contentResolver.openFileDescriptor(uri.toUri(), "r")
                 fd?.use { pfd ->
@@ -358,12 +424,18 @@ fun loadDocumentPreviewFromUri(
                             val targetHeight = (page.height * scale).toInt().coerceAtLeast(1)
                             val bitmap = createBitmap(targetWidth, targetHeight)
                             bitmap.eraseColor(Color.WHITE)
-                            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                            page.render(
+                                bitmap,
+                                null,
+                                null,
+                                PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                            )
                             return bitmap
                         }
                     }
                 }
             }
+
             else -> null
         }
     } catch (_: Exception) {
