@@ -1,9 +1,13 @@
 package com.example.sample.navigation
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-sealed interface Destinations {
+@Serializable
+sealed interface Destinations : NavKey{
 
+    val showBottomBar: Boolean
+        get() = true
     @Serializable
     data object Dashboard : Destinations
 
@@ -15,6 +19,12 @@ sealed interface Destinations {
 
     @Serializable
     data object Family : Destinations
+
+    @Serializable
+    data class DocumentDetailScreen(val id : String) : Destinations{
+        override val showBottomBar: Boolean
+            get() = false
+    }
 
 
 }

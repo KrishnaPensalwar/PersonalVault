@@ -13,53 +13,71 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.sample.Greeting
+import com.example.sample.storage.StorageScreen
+import com.example.sample.dashboard.DashboardScreen
+import com.example.sample.password.PasswordScreen
+import com.example.sample.family.FamilyScreen
+import com.example.sample.storage.DocumentDetailScreen
 
 @Composable
 fun AppNavigation(
     modifier: Modifier = Modifier
 ) {
-    val backStack = remember {
-        mutableStateListOf<Destinations>(
-            Destinations.Dashboard
-        )
-    }
+    val backStack = rememberNavBackStack(Destinations.Dashboard)
+    val currentDestination = backStack.last() as Destinations
+
     Scaffold(
         modifier = Modifier.fillMaxSize(), bottomBar = {
-            BottomBar(
-                currentDestination = backStack.last(), onDestinationSelected = { destination ->
-                    if (backStack.last() != destination) {
-                        backStack.add(destination)
+            if (currentDestination.showBottomBar) {
+                BottomBar(
+                    currentDestination = currentDestination,
+                    onDestinationSelected = { destination ->
+                        if (currentDestination != destination) {
+                            backStack.add(destination)
+                        }
                     }
-                })
+                )
+            }
         }) { innerPadding ->
 
-        NavDisplay(backStack = backStack, modifier = modifier.padding(innerPadding), onBack = {
-            if (backStack.size > 1) {
-                backStack.removeLastOrNull()
-            }
-        }, entryProvider = entryProvider {
-            entry<Destinations.Dashboard> {
-                Greeting("Home")
-            }
+        CompositionLocalProvider(
+            LocalBackStack provides backStack
+        ) {
+            NavDisplay(backStack = backStack, modifier = modifier.padding(innerPadding), onBack = {
+                if (backStack.size > 1) {
+                    backStack.removeLastOrNull()
+                }
+            }, entryProvider = entryProvider {
+                entry<Destinations.Dashboard> {
+                    DashboardScreen()
+                }
 
-            entry<Destinations.Password> {
-                Greeting("Password")
-            }
+                entry<Destinations.Password> {
+                    PasswordScreen()
+                }
 
-            entry<Destinations.Storage> {
-                Greeting("Storage")
-            }
-            entry<Destinations.Family> {
-                Greeting("Family")
-            }
-        })
+                entry<Destinations.Storage> {
+                    StorageScreen()
+                }
+                entry<Destinations.Family> {
+                    FamilyScreen()
+                }
+                entry<Destinations.DocumentDetailScreen> { document ->
+                    DocumentDetailScreen(id = document.id)
+                }
+            })
+        }
     }
 }
 
