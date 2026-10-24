@@ -42,7 +42,7 @@ fun getDocumentInfo(context: Context, uri: Uri): SelectedDocument {
     }
 
     return SelectedDocument(
-        uri,
+        uri.toString(),
         size,
         name,
         context.contentResolver.getType(uri)

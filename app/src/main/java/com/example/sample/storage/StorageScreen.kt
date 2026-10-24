@@ -54,6 +54,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
+import com.example.sample.navigation.Destinations
+import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,6 +81,8 @@ fun StorageScreen(
     var isConfirmedToDismiss by remember { mutableStateOf(false) }
 
     val documents by viewModel.documents.collectAsState()
+
+    val backStack = LocalBackStack.current
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -139,7 +144,14 @@ fun StorageScreen(
                 StorageDocumentCard(
                     document = doc,
                     onClick = {
-                        // We'll add full document viewing later.
+                        backStack.add(Destinations.DocumentDetailScreen(
+                            SelectedDocument(
+                                doc.relativePath,
+                                doc.sizeBytes,
+                                doc.name,
+                                doc.mimeType,
+                            )
+                        ))
                     }
                 )
                 Spacer(Modifier.height(8.dp))
@@ -225,7 +237,7 @@ fun DocumentSaveBottomSheet(
     ) {
         value = withContext(Dispatchers.IO) {
             if (selectedUri != null && selectedDocument != null) {
-                loadDocumentPreviewFromUri(context, selectedUri, selectedDocument.mimeType)
+                loadDocumentPreviewFromUri(context, selectedUri.toString(), selectedDocument.mimeType)
             } else null
         }
     }
@@ -332,18 +344,18 @@ fun DiscardDocumentDialog(
 
 fun loadDocumentPreviewFromUri(
     context: Context,
-    uri: Uri,
+    uri: String,
     mimeType: String?
 ): Bitmap? {
     return try {
         when {
             mimeType?.startsWith("image/") == true -> {
-                context.contentResolver.openInputStream(uri)?.use { stream ->
+                context.contentResolver.openInputStream(uri.toUri())?.use { stream ->
                     BitmapFactory.decodeStream(stream)
                 }
             }
             mimeType == "application/pdf" -> {
-                val fd = context.contentResolver.openFileDescriptor(uri, "r")
+                val fd = context.contentResolver.openFileDescriptor(uri.toUri(), "r")
                 fd?.use { pfd ->
                     PdfRenderer(pfd).use { renderer ->
                         if (renderer.pageCount == 0) return null
