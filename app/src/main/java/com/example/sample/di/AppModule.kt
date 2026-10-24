@@ -4,6 +4,7 @@ import com.example.sample.storage.StorageViewModel
 import com.example.sample.dashboard.DashboardViewModel
 import com.example.sample.password.PasswordViewModel
 import com.example.sample.family.FamilyViewModel
+import com.example.sample.storage.DocumentDetailViewModel
 import com.example.sample.data.local.VaultDatabase
 import com.example.sample.storage.data.VaultDocumentImpl
 import org.koin.android.ext.koin.androidContext
@@ -19,4 +20,5 @@ val appModule = module {
     viewModel { DashboardViewModel() }
     viewModel { PasswordViewModel() }
     viewModel { FamilyViewModel() }
+    viewModel { DocumentDetailViewModel(get()) }
 }

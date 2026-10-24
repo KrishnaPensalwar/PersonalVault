@@ -21,6 +21,13 @@ interface VaultDocumentDao {
         id: String
     ): VaultDocumentEntity?
 
+    @Query("UPDATE vault_documents SET name = :name WHERE id = :id")
+    suspend fun updateDocumentDetails(
+        id: String,
+        name: String,
+    )
+
+
     @Query("DELETE FROM vault_documents WHERE id = :id")
     suspend fun deleteDocumentById(id: String)
 

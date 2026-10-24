@@ -144,14 +144,7 @@ fun StorageScreen(
                 StorageDocumentCard(
                     document = doc,
                     onClick = {
-                        backStack.add(Destinations.DocumentDetailScreen(
-                            SelectedDocument(
-                                doc.relativePath,
-                                doc.sizeBytes,
-                                doc.name,
-                                doc.mimeType,
-                            )
-                        ))
+                        backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
                     }
                 )
                 Spacer(Modifier.height(8.dp))

@@ -74,7 +74,7 @@ fun AppNavigation(
                     FamilyScreen()
                 }
                 entry<Destinations.DocumentDetailScreen> { document ->
-                    DocumentDetailScreen(document.documentEntity)
+                    DocumentDetailScreen(id = document.id)
                 }
             })
         }

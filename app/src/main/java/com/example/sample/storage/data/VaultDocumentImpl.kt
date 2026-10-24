@@ -25,4 +25,11 @@ class VaultDocumentImpl(
     suspend fun deleteDocumentById(id: String) {
         vaultDocumentDao.deleteDocumentById(id)
     }
+
+    suspend fun updateDocumentDetails(
+        id: String,
+        name: String,
+    ) {
+        vaultDocumentDao.updateDocumentDetails(id, name)
+    }
 }

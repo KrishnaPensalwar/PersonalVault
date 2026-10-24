@@ -1,8 +1,6 @@
 package com.example.sample.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.example.sample.storage.SelectedDocument
-import com.example.sample.storage.data.VaultDocumentEntity
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -23,7 +21,7 @@ sealed interface Destinations : NavKey{
     data object Family : Destinations
 
     @Serializable
-    data class DocumentDetailScreen(val documentEntity: SelectedDocument ?= null) : Destinations{
+    data class DocumentDetailScreen(val id : String) : Destinations{
         override val showBottomBar: Boolean
             get() = false
     }
