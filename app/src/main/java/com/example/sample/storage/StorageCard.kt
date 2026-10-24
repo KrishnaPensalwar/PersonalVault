@@ -3,7 +3,9 @@ package com.example.sample.storage
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
+import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -154,7 +156,7 @@ fun StorageDocumentCard(
     }
 }
 
-private fun loadDocumentPreview(
+fun loadDocumentPreview(
     context: Context,
     document: VaultDocumentEntity
 ): Bitmap? {
