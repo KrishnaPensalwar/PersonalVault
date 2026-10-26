@@ -48,9 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
-import com.example.sample.password.EmptyState
-import com.example.sample.password.FullScreenError
-import com.example.sample.password.FullScreenLoading
+import androidx.compose.material.icons.filled.Lock
+import com.example.sample.common.EmptyState
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import com.example.sample.password.PasswordCard
 import com.example.sample.password.domain.Password
 import kotlinx.coroutines.flow.collectLatest
@@ -118,11 +119,27 @@ fun PasswordScreen(
 
             // ── Content ──────────────────────────────────────────────────────
             when (val state = uiState) {
-                is PasswordListUiState.Loading -> FullScreenLoading()
-                is PasswordListUiState.Error -> FullScreenError(state.message)
+                is PasswordListUiState.Loading -> LoadingState(title = "Loading Passwords...")
+                is PasswordListUiState.Error -> ErrorState(
+                    title = "Error Loading Passwords",
+                    description = state.message,
+                    image = Icons.Default.Lock,
+                )
                 is PasswordListUiState.Success -> {
                     if (state.passwords.isEmpty()) {
-                        EmptyState(showFavoritesOnly = showFavoritesOnly)
+                        if (showFavoritesOnly) {
+                            EmptyState(
+                                title = "No favourites yet",
+                                description = "Mark a password as favourite to see it here",
+                                image = Icons.Default.StarBorder,
+                            )
+                        } else {
+                            EmptyState(
+                                title = "No passwords yet",
+                                description = "Tap + to add your first password",
+                                image = Icons.Default.Lock,
+                            )
+                        }
                     } else {
                         PasswordList(
                             passwords = state.passwords,

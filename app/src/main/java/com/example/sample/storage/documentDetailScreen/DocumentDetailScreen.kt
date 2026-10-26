@@ -22,7 +22,8 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,39 +78,17 @@ fun DocumentDetailScreen(
     ) {
             when (val state = uiState) {
                 is DocumentDetailUiState.Loading -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator()
-                        Text("Loading Document Details...")
-                    }
+                    LoadingState(title = "Loading Document Details...")
                 }
 
                 is DocumentDetailUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { viewModel.loadDocument(id) }) {
-                                Text("Retry")
-                            }
-                            TextButton(onClick = { backStack.removeLastOrNull() }) {
-                                Text("Go Back")
-                            }
-                        }
-                    }
+                    ErrorState(
+                        title = "Error Loading Document",
+                        description = state.message,
+                        image = Icons.AutoMirrored.Filled.InsertDriveFile,
+                        onRetry = { viewModel.loadDocument(id) },
+                        onBack = { backStack.removeLastOrNull() }
+                    )
                 }
 
                 is DocumentDetailUiState.Success -> {

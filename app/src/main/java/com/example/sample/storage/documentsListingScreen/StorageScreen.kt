@@ -35,9 +35,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import com.example.sample.common.EmptyState
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -180,59 +182,25 @@ fun StorageScreen(
 
             when (val state = uiState) {
                 is StorageUiState.Loading -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(8.dp))
-                        Text("Loading Documents...")
-                    }
+                    LoadingState(title = "Loading Documents...")
                 }
 
                 is StorageUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.getDocuments(searchQuery) }
-                        ) {
-                            Text("Retry")
-                        }
-                    }
+                    ErrorState(
+                        title = "Error Loading Documents",
+                        description = state.message,
+                        image = Icons.Default.Storage,
+                        onRetry = { viewModel.getDocuments(searchQuery) }
+                    )
                 }
 
                 is StorageUiState.Success -> {
                     if (state.documents.isEmpty()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(top = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Storage,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                            )
-                            Text(
-                                text = if (searchQuery.isBlank()) "No documents saved yet" else "No matching documents found",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        EmptyState(
+                            title = if (searchQuery.isBlank()) "No documents saved yet" else "No matching documents found",
+                            description = if (searchQuery.isBlank()) "Tap the + button to upload a document" else "Try searching with a different term",
+                            image = Icons.Default.Storage
+                        )
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
