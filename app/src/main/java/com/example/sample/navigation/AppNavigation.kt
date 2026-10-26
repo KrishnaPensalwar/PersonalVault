@@ -16,19 +16,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.sample.dashboard.DashboardScreen
-import com.example.sample.family.FamilyMemberProfileScreen
-import com.example.sample.family.FamilyScreen
-import com.example.sample.password.PasswordDetailScreen
-import com.example.sample.password.PasswordFormScreen
-import com.example.sample.password.PasswordScreen
-import com.example.sample.storage.DocumentDetailScreen
+import com.example.sample.family.memberProfile.FamilyMemberProfileScreen
+import com.example.sample.family.membersListingScreen.FamilyScreen
+import com.example.sample.password.passwordDetail.PasswordDetailScreen
+import com.example.sample.password.passwordInputEntry.PasswordFormScreen
+import com.example.sample.password.passwordListingScreen.PasswordScreen
+import com.example.sample.storage.documentDetailScreen.DocumentDetailScreen
 import com.example.sample.storage.DocumentViewerScreen
-import com.example.sample.storage.StorageScreen
+import com.example.sample.storage.documentsListingScreen.StorageScreen
 
 @Composable
 fun AppNavigation(

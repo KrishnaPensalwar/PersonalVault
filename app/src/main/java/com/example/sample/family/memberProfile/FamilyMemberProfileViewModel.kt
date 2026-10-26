@@ -1,8 +1,7 @@
-package com.example.sample.family
+package com.example.sample.family.memberProfile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sample.family.data.FamilyMemberEntity
 import com.example.sample.family.data.FamilyMemberRepository
 import com.example.sample.storage.data.VaultDocumentEntity
 import com.example.sample.storage.data.VaultDocumentImpl
@@ -19,24 +18,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-// ── UI State ──────────────────────────────────────────────────────────────────
-
-data class MemberProfileUiState(
-    val member: FamilyMemberEntity? = null,
-    val documents: List<VaultDocumentEntity> = emptyList(),
-    val isLoading: Boolean = true,
-    val error: String? = null,
-)
-
-// ── One-shot events ───────────────────────────────────────────────────────────
-
-sealed interface MemberProfileEvent {
-    data object DeletedSuccessfully : MemberProfileEvent
-    data class Error(val message: String) : MemberProfileEvent
-}
-
-// ── ViewModel ─────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FamilyMemberProfileViewModel(

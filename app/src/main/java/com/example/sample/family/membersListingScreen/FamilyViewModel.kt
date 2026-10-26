@@ -1,4 +1,4 @@
-package com.example.sample.family
+package com.example.sample.family.membersListingScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,4 +1,4 @@
-package com.example.sample.storage
+package com.example.sample.storage.documentDetailScreen
 
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
+import com.example.sample.storage.loadDocumentPreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +73,8 @@ fun DocumentDetailScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0,0,0,0)
     ) { innerPadding ->
         Box(
             modifier = Modifier

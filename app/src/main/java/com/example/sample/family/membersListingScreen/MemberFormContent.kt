@@ -1,4 +1,4 @@
-package com.example.sample.family
+package com.example.sample.family.membersListingScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

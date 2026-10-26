@@ -45,6 +45,8 @@ import com.example.sample.common.UnsupportedDocViewer
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
+import com.example.sample.storage.documentDetailScreen.DocumentDetailUiState
+import com.example.sample.storage.documentDetailScreen.DocumentDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 

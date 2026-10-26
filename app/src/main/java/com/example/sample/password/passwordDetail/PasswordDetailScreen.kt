@@ -1,5 +1,8 @@
-package com.example.sample.password
+package com.example.sample.password.passwordDetail
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.navigation.Destinations
+import com.example.sample.password.DetailFieldCard
 import com.example.sample.password.domain.Password
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -163,9 +167,9 @@ fun PasswordDetailScreen(
                         passwordVisible = detailState.passwordVisible,
                         onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
                         onCopyToClipboard = { text, _ ->
-                            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
-                                as android.content.ClipboardManager
-                            cm.setPrimaryClip(android.content.ClipData.newPlainText("Vault", text))
+                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE)
+                                as ClipboardManager
+                            cm.setPrimaryClip(ClipData.newPlainText("Vault", text))
                         },
                     )
                 }

@@ -1,4 +1,4 @@
-package com.example.sample.password
+package com.example.sample.password.passwordInputEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

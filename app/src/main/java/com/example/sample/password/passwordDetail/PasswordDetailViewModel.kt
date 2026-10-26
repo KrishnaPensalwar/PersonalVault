@@ -1,4 +1,4 @@
-package com.example.sample.password
+package com.example.sample.password.passwordDetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,17 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class PasswordDetailUiState(
-    val password: Password? = null,
-    val isLoading: Boolean = true,
-    val error: String? = null,
-    val passwordVisible: Boolean = false,
-)
-
-sealed interface PasswordDetailEvent {
-    data object DeletedSuccessfully : PasswordDetailEvent
-    data class Error(val message: String) : PasswordDetailEvent
-}
 
 class PasswordDetailViewModel(
     private val repository: PasswordRepository,

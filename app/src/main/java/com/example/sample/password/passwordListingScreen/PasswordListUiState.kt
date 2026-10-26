@@ -1,4 +1,4 @@
-package com.example.sample.password
+package com.example.sample.password.passwordListingScreen
 
 import com.example.sample.password.domain.Password
 

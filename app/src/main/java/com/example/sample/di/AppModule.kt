@@ -2,19 +2,19 @@ package com.example.sample.di
 
 import com.example.sample.data.local.VaultDatabase
 import com.example.sample.dashboard.DashboardViewModel
-import com.example.sample.family.FamilyMemberProfileViewModel
-import com.example.sample.family.FamilyViewModel
+import com.example.sample.family.memberProfile.FamilyMemberProfileViewModel
+import com.example.sample.family.membersListingScreen.FamilyViewModel
 import com.example.sample.family.data.FamilyMemberDao
 import com.example.sample.family.data.FamilyMemberRepository
 import com.example.sample.family.data.FamilyMemberRepositoryImpl
-import com.example.sample.password.PasswordDetailViewModel
-import com.example.sample.password.PasswordFormViewModel
-import com.example.sample.password.PasswordViewModel
+import com.example.sample.password.passwordDetail.PasswordDetailViewModel
+import com.example.sample.password.passwordInputEntry.PasswordFormViewModel
+import com.example.sample.password.passwordListingScreen.PasswordViewModel
 import com.example.sample.password.data.PasswordDao
 import com.example.sample.password.data.PasswordRepository
 import com.example.sample.password.data.PasswordRepositoryImpl
-import com.example.sample.storage.DocumentDetailViewModel
-import com.example.sample.storage.StorageViewModel
+import com.example.sample.storage.documentDetailScreen.DocumentDetailViewModel
+import com.example.sample.storage.documentsListingScreen.StorageViewModel
 import com.example.sample.storage.data.VaultDocumentDao
 import com.example.sample.storage.data.VaultDocumentImpl
 import org.koin.android.ext.koin.androidContext
