@@ -2,7 +2,11 @@ package com.example.sample.di
 
 import com.example.sample.data.local.VaultDatabase
 import com.example.sample.dashboard.DashboardViewModel
+import com.example.sample.family.FamilyMemberProfileViewModel
 import com.example.sample.family.FamilyViewModel
+import com.example.sample.family.data.FamilyMemberDao
+import com.example.sample.family.data.FamilyMemberRepository
+import com.example.sample.family.data.FamilyMemberRepositoryImpl
 import com.example.sample.password.PasswordDetailViewModel
 import com.example.sample.password.PasswordFormViewModel
 import com.example.sample.password.PasswordViewModel
@@ -45,6 +49,16 @@ val appModule = module {
         PasswordRepositoryImpl(get<PasswordDao>())
     }
 
+    // ── Family DAOs & Repositories ────────────────────────────────────────────
+
+    single<FamilyMemberDao> {
+        get<VaultDatabase>().familyMemberDao()
+    }
+
+    single<FamilyMemberRepository> {
+        FamilyMemberRepositoryImpl(get<FamilyMemberDao>())
+    }
+
     // ── ViewModels ────────────────────────────────────────────────────────────
 
     viewModel { StorageViewModel(get()) }
@@ -53,5 +67,6 @@ val appModule = module {
     viewModel { PasswordViewModel(get<PasswordRepository>()) }
     viewModel { PasswordDetailViewModel(get<PasswordRepository>()) }
     viewModel { PasswordFormViewModel(get<PasswordRepository>()) }
-    viewModel { FamilyViewModel() }
+    viewModel { FamilyViewModel(get<FamilyMemberRepository>(), get<VaultDocumentImpl>()) }
+    viewModel { FamilyMemberProfileViewModel(get<FamilyMemberRepository>(), get<VaultDocumentImpl>()) }
 }

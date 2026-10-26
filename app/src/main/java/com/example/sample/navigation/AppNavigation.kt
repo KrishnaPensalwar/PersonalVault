@@ -21,11 +21,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.sample.dashboard.DashboardScreen
+import com.example.sample.family.FamilyMemberProfileScreen
 import com.example.sample.family.FamilyScreen
 import com.example.sample.password.PasswordDetailScreen
 import com.example.sample.password.PasswordFormScreen
 import com.example.sample.password.PasswordScreen
 import com.example.sample.storage.DocumentDetailScreen
+import com.example.sample.storage.DocumentViewerScreen
 import com.example.sample.storage.StorageScreen
 
 @Composable
@@ -80,8 +82,16 @@ fun AppNavigation(
                         FamilyScreen()
                     }
 
+                    entry<Destinations.FamilyMemberProfile> { dest ->
+                        FamilyMemberProfileScreen(memberId = dest.memberId)
+                    }
+
                     entry<Destinations.DocumentDetailScreen> { document ->
                         DocumentDetailScreen(id = document.id)
+                    }
+
+                    entry<Destinations.DocumentViewer> { document ->
+                        DocumentViewerScreen(id = document.id)
                     }
 
                     // ── Password sub-screens ──────────────────────────────────

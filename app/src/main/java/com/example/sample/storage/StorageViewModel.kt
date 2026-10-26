@@ -31,7 +31,7 @@ class StorageViewModel(
 
     val uiState: StateFlow<StorageUiState> =
         combine(
-            repository.getAllDocuments(),
+            repository.getMyDocuments(),
             searchQuery
                 .debounce(500.milliseconds)
                 .distinctUntilChanged()

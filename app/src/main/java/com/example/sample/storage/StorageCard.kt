@@ -18,8 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +50,9 @@ import java.util.Locale
 fun StorageDocumentCard(
     document: VaultDocumentEntity,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -79,7 +86,7 @@ fun StorageDocumentCard(
             // Left: document preview
             Box(
                 modifier = Modifier
-                    .size(width = 88.dp, height = 80.dp)
+                    .size(width = 80.dp, height = 72.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         MaterialTheme.colorScheme.surfaceVariant
@@ -120,12 +127,12 @@ fun StorageDocumentCard(
                 }
             }
 
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
 
-            // Right: document details
+            // Middle: document details
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = document.name,
@@ -146,9 +153,45 @@ fun StorageDocumentCard(
 
                 Text(
                     text = formatFileSize(document.sizeBytes),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            // Right: Edit and Delete actions
+            if (onEditClick != null || onDeleteClick != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    if (onEditClick != null) {
+                        IconButton(
+                            onClick = onEditClick,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit document",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    if (onDeleteClick != null) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete document",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }

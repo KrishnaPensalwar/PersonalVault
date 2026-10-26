@@ -27,6 +27,12 @@ sealed interface Destinations : NavKey {
             get() = false
     }
 
+    @Serializable
+    data class DocumentViewer(val id: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
     // ── Password sub-screens ──────────────────────────────────────────────────
 
     /**
@@ -40,6 +46,17 @@ sealed interface Destinations : NavKey {
 
     @Serializable
     data class PasswordDetail(val passwordId: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    // ── Family sub-screens ────────────────────────────────────────────────────
+
+    /**
+     * Profile screen for an individual family member.
+     */
+    @Serializable
+    data class FamilyMemberProfile(val memberId: String) : Destinations {
         override val showBottomBar: Boolean
             get() = false
     }

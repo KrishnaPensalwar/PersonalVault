@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -144,6 +145,7 @@ fun StorageScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
@@ -272,6 +274,9 @@ fun StorageScreen(
                                 StorageDocumentCard(
                                     document = doc,
                                     onClick = {
+                                        backStack.add(Destinations.DocumentViewer(id = doc.id))
+                                    },
+                                    onEditClick = {
                                         backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
                                     }
                                 )

@@ -38,11 +38,12 @@ class DocumentDetailViewModel(
         }
     }
 
-    fun updateDocumentName(id: String, newName: String) {
+    fun updateDocumentName(id: String, newName: String, onSuccess: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 repository.updateDocumentDetails(id, newName)
                 loadDocument(id)
+                onSuccess?.invoke()
             } catch (e: Exception) {
                 _uiState.value = DocumentDetailUiState.Error(e.message ?: "Failed to update document")
             }

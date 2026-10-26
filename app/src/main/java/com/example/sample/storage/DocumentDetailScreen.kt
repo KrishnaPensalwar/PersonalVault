@@ -26,6 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,9 +47,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 
@@ -55,64 +61,84 @@ fun DocumentDetailScreen(
     viewModel: DocumentDetailViewModel = koinViewModel()
 ) {
     val backStack = LocalBackStack.current
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(id) {
         viewModel.loadDocument(id)
     }
 
-    when (val state = uiState) {
-        is DocumentDetailUiState.Loading -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-                Text("Loading Document Details...")
-            }
-        }
-
-        is DocumentDetailUiState.Error -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.loadDocument(id) }) {
-                        Text("Retry")
-                    }
-                    TextButton(onClick = { backStack.removeLastOrNull() }) {
-                        Text("Go Back")
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (val state = uiState) {
+                is DocumentDetailUiState.Loading -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Text("Loading Document Details...")
                     }
                 }
-            }
-        }
 
-        is DocumentDetailUiState.Success -> {
-            DocumentDetailContent(
-                doc = state.document,
-                onUpdateName = { newName ->
-                    viewModel.updateDocumentName(id, newName)
-                },
-                onDelete = {
-                    viewModel.deleteDocument(id, onSuccess = {
-                        backStack.removeLastOrNull()
-                    })
-                },
-                onBack = {
-                    backStack.removeLastOrNull()
+                is DocumentDetailUiState.Error -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { viewModel.loadDocument(id) }) {
+                                Text("Retry")
+                            }
+                            TextButton(onClick = { backStack.removeLastOrNull() }) {
+                                Text("Go Back")
+                            }
+                        }
+                    }
                 }
-            )
+
+                is DocumentDetailUiState.Success -> {
+                    DocumentDetailContent(
+                        doc = state.document,
+                        onUpdateName = { newName ->
+                            viewModel.updateDocumentName(id, newName, onSuccess = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Document name updated successfully")
+                                }
+                            })
+                        },
+                        onDelete = {
+                            viewModel.deleteDocument(id, onSuccess = {
+                                backStack.removeLastOrNull()
+                            })
+                        },
+                        onBack = {
+                            backStack.removeLastOrNull()
+                        },
+                        onViewFullDocument = {
+                            backStack.add(Destinations.DocumentViewer(id = id))
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -122,7 +148,8 @@ private fun DocumentDetailContent(
     doc: VaultDocumentEntity,
     onUpdateName: (String) -> Unit,
     onDelete: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onViewFullDocument: () -> Unit
 ) {
     var editableName by remember(doc.name) { mutableStateOf(doc.name) }
     var showDiscardDialog by remember { mutableStateOf(false) }
@@ -190,23 +217,22 @@ private fun DocumentDetailContent(
         Spacer(Modifier.height(24.dp))
 
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            if (preview != null) {
-                Image(
-                    bitmap = preview!!.asImageBitmap(),
-                    contentDescription = "Document Preview",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .clickable { onViewFullDocument() },
+                contentAlignment = Alignment.Center
+            ) {
+                if (preview != null) {
+                    Image(
+                        bitmap = preview!!.asImageBitmap(),
+                        contentDescription = "Document Preview",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
                         contentDescription = "Document Preview",
