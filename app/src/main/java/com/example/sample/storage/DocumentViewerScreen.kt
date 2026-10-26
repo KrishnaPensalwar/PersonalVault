@@ -22,11 +22,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import com.example.sample.navigation.SetTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -101,58 +99,32 @@ fun DocumentViewerScreen(
 
         is DocumentDetailUiState.Success -> {
             val doc = state.document
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = doc.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        windowInsets = WindowInsets(0, 0, 0, 0),
-                        navigationIcon = {
-                            IconButton(onClick = { backStack.removeLastOrNull() }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back"
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = { openDocumentInExternalApp(context, doc) }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.OpenInNew,
-                                    contentDescription = "Open in external app"
-                                )
-                            }
-                            IconButton(onClick = {
-                                backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
-                            }) {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = "Edit document"
-                                )
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+            SetTopBar(
+                title = doc.name,
+                actions = {
+                    IconButton(onClick = { openDocumentInExternalApp(context, doc) }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = "Open in external app"
                         )
-                    )
+                    }
+                    IconButton(onClick = {
+                        backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
+                    }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit document"
+                        )
+                    }
                 }
-            ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    DocumentViewerContent(
-                        doc = doc,
-                        onOpenExternally = { openDocumentInExternalApp(context, doc) }
-                    )
-                }
+            )
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                DocumentViewerContent(
+                    doc = doc,
+                    onOpenExternally = { openDocumentInExternalApp(context, doc) }
+                )
             }
         }
     }

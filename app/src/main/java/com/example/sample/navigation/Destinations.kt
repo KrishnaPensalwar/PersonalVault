@@ -9,6 +9,20 @@ sealed interface Destinations : NavKey {
     val showBottomBar: Boolean
         get() = true
 
+    val defaultTitle: String
+        get() = when (this) {
+            is Dashboard -> "Dashboard"
+            is Storage -> "Storage"
+            is Password -> "Passwords"
+            is Family -> "Family"
+            is DocumentDetailScreen -> "Document Details"
+            is DocumentViewer -> "Document"
+            is PasswordForm -> if (passwordId == null) "Add Password" else "Edit Password"
+            is PasswordDetail -> "Password Detail"
+            is FamilyMemberProfile -> "Member Profile"
+        }
+
+
     @Serializable
     data object Dashboard : Destinations
 

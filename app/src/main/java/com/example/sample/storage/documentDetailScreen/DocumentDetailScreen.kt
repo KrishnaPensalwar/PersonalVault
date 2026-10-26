@@ -27,11 +27,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.example.sample.navigation.SetTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,15 +72,9 @@ fun DocumentDetailScreen(
         viewModel.loadDocument(id)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        contentWindowInsets = WindowInsets(0,0,0,0)
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
             when (val state = uiState) {
                 is DocumentDetailUiState.Loading -> {
                     Column(
@@ -140,9 +134,13 @@ fun DocumentDetailScreen(
                             backStack.add(Destinations.DocumentViewer(id = id))
                         }
                     )
-                }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -175,39 +173,16 @@ private fun DocumentDetailContent(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier.clickable {
-                        if (nameChanged) {
-                            showDiscardDialog = true
-                        } else {
-                            onBack()
-                        }
-                    }
-                )
-                Text(
-                    text = doc.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1
-                )
+    SetTopBar(
+        title = doc.name,
+        onBackClick = {
+            if (nameChanged) {
+                showDiscardDialog = true
+            } else {
+                onBack()
             }
-
+        },
+        actions = {
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     Icons.Default.Delete,
@@ -216,8 +191,13 @@ private fun DocumentDetailContent(
                 )
             }
         }
+    )
 
-        Spacer(Modifier.height(24.dp))
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(16.dp))
 
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             Box(

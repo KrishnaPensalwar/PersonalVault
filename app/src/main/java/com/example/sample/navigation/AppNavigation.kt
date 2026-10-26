@@ -35,9 +35,21 @@ fun AppNavigation(
 ) {
     val backStack = rememberNavBackStack(Destinations.Dashboard)
     val currentDestination = backStack.last() as Destinations
+    val topBarState = rememberTopBarState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        topBar = {
+            AppTopBar(
+                currentDestination = currentDestination,
+                topBarState = topBarState,
+                onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                }
+            )
+        },
         bottomBar = {
             if (currentDestination.showBottomBar) {
                 BottomBar(
@@ -54,6 +66,7 @@ fun AppNavigation(
 
         CompositionLocalProvider(
             LocalBackStack provides backStack,
+            LocalTopBarState provides topBarState,
         ) {
             NavDisplay(
                 backStack = backStack,
@@ -66,40 +79,58 @@ fun AppNavigation(
                 entryProvider = entryProvider {
 
                     entry<Destinations.Dashboard> {
-                        DashboardScreen()
+                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Dashboard) {
+                            DashboardScreen()
+                        }
                     }
 
                     entry<Destinations.Password> {
-                        PasswordScreen()
+                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Password) {
+                            PasswordScreen()
+                        }
                     }
 
                     entry<Destinations.Storage> {
-                        StorageScreen()
+                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Storage) {
+                            StorageScreen()
+                        }
                     }
 
                     entry<Destinations.Family> {
-                        FamilyScreen()
+                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Family) {
+                            FamilyScreen()
+                        }
                     }
 
                     entry<Destinations.FamilyMemberProfile> { dest ->
-                        FamilyMemberProfileScreen(memberId = dest.memberId)
+                        CompositionLocalProvider(LocalCurrentDestination provides dest) {
+                            FamilyMemberProfileScreen(memberId = dest.memberId)
+                        }
                     }
 
                     entry<Destinations.DocumentDetailScreen> { document ->
-                        DocumentDetailScreen(id = document.id)
+                        CompositionLocalProvider(LocalCurrentDestination provides document) {
+                            DocumentDetailScreen(id = document.id)
+                        }
                     }
 
                     entry<Destinations.DocumentViewer> { document ->
-                        DocumentViewerScreen(id = document.id)
+                        CompositionLocalProvider(LocalCurrentDestination provides document) {
+                            DocumentViewerScreen(id = document.id)
+                        }
                     }
 
                     // ── Password sub-screens ──────────────────────────────────
                     entry<Destinations.PasswordForm> { dest ->
-                        PasswordFormScreen(passwordId = dest.passwordId)
+                        CompositionLocalProvider(LocalCurrentDestination provides dest) {
+                            PasswordFormScreen(passwordId = dest.passwordId)
+                        }
                     }
 
                     entry<Destinations.PasswordDetail> { dest ->
-                        PasswordDetailScreen(passwordId = dest.passwordId)
+                        CompositionLocalProvider(LocalCurrentDestination provides dest) {
+                            PasswordDetailScreen(passwordId = dest.passwordId)
+                        }
                     }
                 },
             )

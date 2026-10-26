@@ -42,13 +42,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import com.example.sample.navigation.SetTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -95,86 +93,69 @@ fun PasswordDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = detailState.password?.title ?: "Password Detail",
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                    )
-                },
-                windowInsets = WindowInsets(0,0,0,0),
-                navigationIcon = {
-                    IconButton(onClick = { backStack.removeLastOrNull() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    detailState.password?.let { password ->
-                        // Favourite toggle
-                        IconButton(onClick = { viewModel.onToggleFavorite(password) }) {
-                            Icon(
-                                if (password.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Toggle favourite",
-                                tint = if (password.isFavorite) Color(0xFFE91E63)
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        // Edit
-                        IconButton(onClick = {
-                            backStack.add(Destinations.PasswordForm(password.id))
-                        }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit")
-                        }
-                        // Delete
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            when {
-                detailState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                detailState.error != null -> {
-                    Text(
-                        text = detailState.error ?: "Unknown error",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center),
+    SetTopBar(
+        title = detailState.password?.title ?: "Password Detail",
+        actions = {
+            detailState.password?.let { password ->
+                // Favourite toggle
+                IconButton(onClick = { viewModel.onToggleFavorite(password) }) {
+                    Icon(
+                        if (password.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Toggle favourite",
+                        tint = if (password.isFavorite) Color(0xFFE91E63)
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                detailState.password != null -> {
-                    PasswordDetailContent(
-                        password = detailState.password!!,
-                        passwordVisible = detailState.passwordVisible,
-                        onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
-                        onCopyToClipboard = { text, _ ->
-                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE)
-                                as ClipboardManager
-                            cm.setPrimaryClip(ClipData.newPlainText("Vault", text))
-                        },
+                // Edit
+                IconButton(onClick = {
+                    backStack.add(Destinations.PasswordForm(password.id))
+                }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                // Delete
+                IconButton(onClick = { showDeleteDialog = true }) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error,
                     )
                 }
             }
         }
+    )
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        when {
+            detailState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            detailState.error != null -> {
+                Text(
+                    text = detailState.error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+            detailState.password != null -> {
+                PasswordDetailContent(
+                    password = detailState.password!!,
+                    passwordVisible = detailState.passwordVisible,
+                    onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
+                    onCopyToClipboard = { text, _ ->
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE)
+                            as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("Vault", text))
+                    },
+                )
+            }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 
     // Delete confirmation

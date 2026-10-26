@@ -8,3 +8,11 @@ import androidx.navigation3.runtime.NavKey
 val LocalBackStack = staticCompositionLocalOf<NavBackStack<NavKey>> {
     error("BackStack not provided")
 }
+
+val LocalTopBarState = staticCompositionLocalOf<TopBarState> {
+    error("TopBarState not provided")
+}
+
+val LocalCurrentDestination = staticCompositionLocalOf<Destinations?> {
+    null
+}

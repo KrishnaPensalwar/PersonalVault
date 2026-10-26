@@ -29,15 +29,13 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.example.sample.navigation.SetTopBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -127,72 +125,55 @@ fun FamilyMemberProfileScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.member?.name ?: "Member Profile",
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { backStack.removeLastOrNull() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-                windowInsets = WindowInsets(0, 0, 0, 0)
+    SetTopBar(
+        title = uiState.member?.name ?: "Member Profile"
+    )
 
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { documentPicker.launch(arrayOf("*/*")) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape,
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add document")
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        when {
+            uiState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
 
-                uiState.error != null -> {
-                    Text(
-                        text = uiState.error ?: "Unknown error",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
+            uiState.error != null -> {
+                Text(
+                    text = uiState.error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
 
-                uiState.member != null -> {
-                    MemberProfileContent(
-                        uiState = uiState,
-                        onDocumentClick = { docId ->
-                            backStack.add(Destinations.DocumentViewer(id = docId))
-                        },
-                        onEditDocument = { docId ->
-                            backStack.add(Destinations.DocumentDetailScreen(id = docId))
-                        },
-                        onDeleteDocument = { id -> pendingDeleteDocId = id },
-                    )
-                }
+            uiState.member != null -> {
+                MemberProfileContent(
+                    uiState = uiState,
+                    onDocumentClick = { docId ->
+                        backStack.add(Destinations.DocumentViewer(id = docId))
+                    },
+                    onEditDocument = { docId ->
+                        backStack.add(Destinations.DocumentDetailScreen(id = docId))
+                    },
+                    onDeleteDocument = { id -> pendingDeleteDocId = id },
+                )
             }
         }
+
+        FloatingActionButton(
+            onClick = { documentPicker.launch(arrayOf("*/*")) },
+            containerColor = MaterialTheme.colorScheme.primary,
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add document")
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 
     // ── Document save bottom sheet ────────────────────────────────────────────
