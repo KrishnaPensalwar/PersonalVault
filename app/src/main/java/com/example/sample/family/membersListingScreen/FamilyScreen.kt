@@ -43,7 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.sample.family.EmptyState
+import androidx.compose.material.icons.filled.FamilyRestroom
+import com.example.sample.common.EmptyState
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import com.example.sample.family.FamilyMemberCard
 import com.example.sample.family.data.FamilyMemberEntity
 import com.example.sample.navigation.Destinations
@@ -99,33 +102,24 @@ fun FamilyScreen(viewModel: FamilyViewModel = koinViewModel()) {
         ) {
             when (val state = uiState) {
                 is FamilyUiState.Loading -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(8.dp))
-                        Text("Loading…")
-                    }
+                    LoadingState(title = "Loading Family Members...")
                 }
 
                 is FamilyUiState.Error -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                    ErrorState(
+                        title = "Error Loading Family",
+                        description = state.message,
+                        image = Icons.Default.FamilyRestroom
+                    )
                 }
 
                 is FamilyUiState.Success -> {
                     if (state.members.isEmpty()) {
-                        EmptyState()
+                        EmptyState(
+                            title = "No family members yet",
+                            description = "Tap + to add your first family member",
+                            image = Icons.Default.FamilyRestroom
+                        )
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),

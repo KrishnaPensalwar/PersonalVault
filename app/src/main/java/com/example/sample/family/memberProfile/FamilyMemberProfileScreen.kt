@@ -22,10 +22,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import com.example.sample.common.EmptyState
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -134,14 +137,14 @@ fun FamilyMemberProfileScreen(
     ) {
         when {
             uiState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                LoadingState(title = "Loading Member Profile...")
             }
 
             uiState.error != null -> {
-                Text(
-                    text = uiState.error ?: "Unknown error",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center),
+                ErrorState(
+                    title = "Error Loading Profile",
+                    description = uiState.error ?: "Member profile could not be loaded",
+                    image = Icons.Default.FamilyRestroom
                 )
             }
 
@@ -302,30 +305,14 @@ private fun MemberProfileContent(
 
         if (uiState.documents.isEmpty()) {
             item(key = "docs_empty") {
-                Column(
+                EmptyState(
+                    title = "No documents yet",
+                    description = "Tap + to add a document for ${member.name}",
+                    image = Icons.AutoMirrored.Filled.InsertDriveFile,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = "No documents yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = "Tap + to add a document for ${member.name}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                )
             }
         } else {
             items(uiState.documents, key = { it.id }) { doc ->

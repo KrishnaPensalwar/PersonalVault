@@ -37,8 +37,9 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -129,13 +130,13 @@ fun PasswordDetailScreen(
     ) {
         when {
             detailState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                LoadingState(title = "Loading Password...")
             }
             detailState.error != null -> {
-                Text(
-                    text = detailState.error ?: "Unknown error",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center),
+                ErrorState(
+                    title = "Password Not Found",
+                    description = detailState.error ?: "Failed to load password",
+                    image = Icons.Default.Lock,
                 )
             }
             detailState.password != null -> {
