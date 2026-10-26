@@ -1,4 +1,4 @@
-package com.example.sample.storage
+package com.example.sample.storage.documentsListingScreen
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,11 +31,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FileCopy
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,7 +74,11 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
+import com.example.sample.storage.SelectedDocument
+import com.example.sample.storage.StorageDocumentCard
+import com.example.sample.storage.copyDocumentToInternalStorage
 import com.example.sample.storage.data.VaultDocumentEntity
+import com.example.sample.storage.getDocumentInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,6 +146,7 @@ fun StorageScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
@@ -272,6 +275,9 @@ fun StorageScreen(
                                 StorageDocumentCard(
                                     document = doc,
                                     onClick = {
+                                        backStack.add(Destinations.DocumentViewer(id = doc.id))
+                                    },
+                                    onEditClick = {
                                         backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
                                     }
                                 )

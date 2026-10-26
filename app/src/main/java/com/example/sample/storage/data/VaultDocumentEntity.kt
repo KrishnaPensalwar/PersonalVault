@@ -11,5 +11,11 @@ data class VaultDocumentEntity(
     val relativePath: String,
     val mimeType: String?,
     val sizeBytes: Long,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    /**
+     * If non-null, this document belongs to the specified family member.
+     * Null means it belongs to the user's own storage (shown in the Storage tab).
+     */
+    val familyMemberId: String? = null,
 )

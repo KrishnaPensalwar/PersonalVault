@@ -1,4 +1,4 @@
-package com.example.sample.storage
+package com.example.sample.storage.documentsListingScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,11 +16,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-sealed interface StorageUiState {
-    data object Loading : StorageUiState
-    data class Success(val documents: List<VaultDocumentEntity>) : StorageUiState
-    data class Error(val message: String) : StorageUiState
-}
 
 @OptIn(FlowPreview::class)
 class StorageViewModel(
@@ -31,7 +26,7 @@ class StorageViewModel(
 
     val uiState: StateFlow<StorageUiState> =
         combine(
-            repository.getAllDocuments(),
+            repository.getMyDocuments(),
             searchQuery
                 .debounce(500.milliseconds)
                 .distinctUntilChanged()

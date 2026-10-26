@@ -1,19 +1,13 @@
-package com.example.sample.storage
+package com.example.sample.storage.documentDetailScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sample.storage.data.VaultDocumentEntity
 import com.example.sample.storage.data.VaultDocumentImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface DocumentDetailUiState {
-    data object Loading : DocumentDetailUiState
-    data class Success(val document: VaultDocumentEntity) : DocumentDetailUiState
-    data class Error(val message: String) : DocumentDetailUiState
-}
 
 class DocumentDetailViewModel(
     private val repository: VaultDocumentImpl
@@ -38,11 +32,12 @@ class DocumentDetailViewModel(
         }
     }
 
-    fun updateDocumentName(id: String, newName: String) {
+    fun updateDocumentName(id: String, newName: String, onSuccess: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 repository.updateDocumentDetails(id, newName)
                 loadDocument(id)
+                onSuccess?.invoke()
             } catch (e: Exception) {
                 _uiState.value = DocumentDetailUiState.Error(e.message ?: "Failed to update document")
             }
