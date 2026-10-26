@@ -4,10 +4,11 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface Destinations : NavKey{
+sealed interface Destinations : NavKey {
 
     val showBottomBar: Boolean
         get() = true
+
     @Serializable
     data object Dashboard : Destinations
 
@@ -21,10 +22,25 @@ sealed interface Destinations : NavKey{
     data object Family : Destinations
 
     @Serializable
-    data class DocumentDetailScreen(val id : String) : Destinations{
+    data class DocumentDetailScreen(val id: String) : Destinations {
         override val showBottomBar: Boolean
             get() = false
     }
 
+    // ── Password sub-screens ──────────────────────────────────────────────────
 
+    /**
+     * Add (passwordId == null) or Edit (passwordId != null) form.
+     */
+    @Serializable
+    data class PasswordForm(val passwordId: String? = null) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    @Serializable
+    data class PasswordDetail(val passwordId: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
 }
