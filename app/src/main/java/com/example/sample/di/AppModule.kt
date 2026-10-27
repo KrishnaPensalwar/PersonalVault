@@ -1,5 +1,7 @@
 package com.example.sample.di
 
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.example.sample.data.local.VaultDatabase
 import com.example.sample.dashboard.DashboardViewModel
 import com.example.sample.family.memberProfile.FamilyMemberProfileViewModel
@@ -17,6 +19,11 @@ import com.example.sample.storage.documentDetailScreen.DocumentDetailViewModel
 import com.example.sample.storage.documentsListingScreen.StorageViewModel
 import com.example.sample.storage.data.VaultDocumentDao
 import com.example.sample.storage.data.VaultDocumentImpl
+import com.example.sample.security.AppLockViewModel
+import com.example.sample.security.BiometricAvailabilityChecker
+import com.example.sample.security.BiometricAvailabilityCheckerImpl
+import com.example.sample.security.data.AppLockRepository
+import com.example.sample.security.data.AppLockRepositoryImpl
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -59,6 +66,30 @@ val appModule = module {
         FamilyMemberRepositoryImpl(get<FamilyMemberDao>())
     }
 
+    // ── App Lock ──────────────────────────────────────────────────────────────
+
+    single(qualifier = org.koin.core.qualifier.named("appLockPrefs")) {
+        val context = androidContext()
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context,
+            "app_lock_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }
+
+    single<AppLockRepository> {
+        AppLockRepositoryImpl(get(qualifier = org.koin.core.qualifier.named("appLockPrefs")))
+    }
+
+    single<BiometricAvailabilityChecker> {
+        BiometricAvailabilityCheckerImpl(androidContext())
+    }
+
     // ── ViewModels ────────────────────────────────────────────────────────────
 
     viewModel { StorageViewModel(get()) }
@@ -69,4 +100,5 @@ val appModule = module {
     viewModel { PasswordFormViewModel(get<PasswordRepository>()) }
     viewModel { FamilyViewModel(get<FamilyMemberRepository>(), get<VaultDocumentImpl>()) }
     viewModel { FamilyMemberProfileViewModel(get<FamilyMemberRepository>(), get<VaultDocumentImpl>()) }
+    viewModel { AppLockViewModel(get<AppLockRepository>(), get<BiometricAvailabilityChecker>()) }
 }
