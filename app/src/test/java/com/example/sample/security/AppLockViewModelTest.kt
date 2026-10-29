@@ -46,7 +46,7 @@ class AppLockViewModelTest {
 
     @Test
     fun `no biometric and PIN already set shows PinEntry`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 0, "Rex") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 0, "Rex") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
         assertEquals(LockScreenState.PinEntry(), viewModel.lockState.value)
     }
@@ -56,7 +56,7 @@ class AppLockViewModelTest {
         val repository = FakeAppLockRepository()
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
 
-        viewModel.onPinSetupSubmit("1234", "1234", 1, "Smith")
+        viewModel.onPinSetupSubmit("123456", "123456", 1, "Smith")
 
         assertEquals(LockScreenState.Unlocked, viewModel.lockState.value)
         assertTrue(repository.isPinSetupComplete())
@@ -66,7 +66,7 @@ class AppLockViewModelTest {
     fun `mismatched confirm pin keeps PinSetup with error`() = runTest {
         val viewModel = AppLockViewModel(FakeAppLockRepository(), FakeBiometricAvailabilityChecker(false))
 
-        viewModel.onPinSetupSubmit("1234", "4321", 1, "Smith")
+        viewModel.onPinSetupSubmit("123456", "654321", 1, "Smith")
 
         assertTrue(viewModel.lockState.value is LockScreenState.PinSetup)
         assertEquals("PINs do not match", (viewModel.lockState.value as LockScreenState.PinSetup).error)
@@ -74,29 +74,29 @@ class AppLockViewModelTest {
 
     @Test
     fun `correct pin entry unlocks`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 0, "Rex") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 0, "Rex") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
 
-        viewModel.onPinEntrySubmit("1234")
+        viewModel.onPinEntrySubmit("123456")
 
         assertEquals(LockScreenState.Unlocked, viewModel.lockState.value)
     }
 
     @Test
     fun `wrong pin entry shows error and stays locked`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 0, "Rex") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 0, "Rex") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
 
-        viewModel.onPinEntrySubmit("0000")
+        viewModel.onPinEntrySubmit("000000")
 
         assertEquals(LockScreenState.PinEntry("Incorrect PIN"), viewModel.lockState.value)
     }
 
     @Test
     fun `forgot pin shows the saved recovery question`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 2, "Lincoln High") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 2, "Lincoln High") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
-        viewModel.onPinEntrySubmit("0000") // land on PinEntry first
+        viewModel.onPinEntrySubmit("000000") // land on PinEntry first
 
         viewModel.onForgotPinClicked()
 
@@ -107,7 +107,7 @@ class AppLockViewModelTest {
 
     @Test
     fun `correct recovery answer moves to SetNewPin`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 2, "Lincoln High") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 2, "Lincoln High") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
         viewModel.onForgotPinClicked()
 
@@ -118,7 +118,7 @@ class AppLockViewModelTest {
 
     @Test
     fun `wrong recovery answer shows error`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 2, "Lincoln High") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 2, "Lincoln High") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
         viewModel.onForgotPinClicked()
 
@@ -129,15 +129,15 @@ class AppLockViewModelTest {
 
     @Test
     fun `setting a new pin after recovery unlocks and updates repository`() = runTest {
-        val repository = FakeAppLockRepository().apply { savePin("1234", 2, "Lincoln High") }
+        val repository = FakeAppLockRepository().apply { savePin("123456", 2, "Lincoln High") }
         val viewModel = AppLockViewModel(repository, FakeBiometricAvailabilityChecker(false))
         viewModel.onForgotPinClicked()
         viewModel.onRecoveryAnswerSubmit("Lincoln High")
 
-        viewModel.onSetNewPinSubmit("5678", "5678")
+        viewModel.onSetNewPinSubmit("567890", "567890")
 
         assertEquals(LockScreenState.Unlocked, viewModel.lockState.value)
-        assertTrue(repository.verifyPin("5678"))
+        assertTrue(repository.verifyPin("567890"))
     }
 
     @Test

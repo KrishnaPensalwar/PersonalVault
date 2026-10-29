@@ -41,7 +41,7 @@ class AppLockViewModel(
 
     fun onPinSetupSubmit(pin: String, confirmPin: String, recoveryQuestionId: Int, recoveryAnswer: String) {
         val error = when {
-            pin.length != 4 || pin.any { !it.isDigit() } -> "PIN must be 4 digits"
+            pin.length != 6 || pin.any { !it.isDigit() } -> "PIN must be 6 digits"
             pin != confirmPin -> "PINs do not match"
             recoveryAnswer.isBlank() -> "Answer is required"
             else -> null
@@ -79,7 +79,7 @@ class AppLockViewModel(
 
     fun onSetNewPinSubmit(pin: String, confirmPin: String) {
         val error = when {
-            pin.length != 4 || pin.any { !it.isDigit() } -> "PIN must be 4 digits"
+            pin.length != 6 || pin.any { !it.isDigit() } -> "PIN must be 6 digits"
             pin != confirmPin -> "PINs do not match"
             else -> null
         }
