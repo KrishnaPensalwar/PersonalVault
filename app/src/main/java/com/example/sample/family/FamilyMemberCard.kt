@@ -28,10 +28,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.sample.family.data.FamilyMemberEntity
+
+private val Navy = Color(0xFF1B2559)
+private val Muted = Color(0xFF8B93A7)
+private val Heart = Color(0xFFE11D48)
 
 @Composable
 fun FamilyMemberCard(
@@ -42,7 +48,7 @@ fun FamilyMemberCard(
     onDeleteClick: () -> Unit,
 ) {
     val iconBackground by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.primaryContainer,
+        targetValue = Color(0xFFE8EEFF),
         animationSpec = tween(300),
         label = "iconBg",
     )
@@ -50,11 +56,9 @@ fun FamilyMemberCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier
@@ -72,9 +76,9 @@ fun FamilyMemberCard(
             ) {
                 Text(
                     text = member.name.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontSize = 20.sp,
+                    color = Navy,
                 )
             }
 
@@ -84,15 +88,16 @@ fun FamilyMemberCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = member.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    color = Navy,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = member.relationship,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Muted,
+                    fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -105,13 +110,13 @@ fun FamilyMemberCard(
                             imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
                             contentDescription = null,
                             modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = Color(0xFF3D5AFE),
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = "$documentCount ${if (documentCount == 1) "document" else "documents"}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 12.sp,
+                            color = Color(0xFF3D5AFE),
                         )
                     }
                 }
@@ -122,14 +127,14 @@ fun FamilyMemberCard(
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit member",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = Color(0xFF9AA3B5),
                 )
             }
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete member",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = Heart,
                 )
             }
         }

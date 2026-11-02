@@ -18,4 +18,5 @@ data class VaultDocumentEntity(
      * Null means it belongs to the user's own storage (shown in the Storage tab).
      */
     val familyMemberId: String? = null,
+    val category: String = "",
 )

@@ -38,6 +38,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.example.sample.common.AppMessages
 import com.example.sample.common.ErrorState
 import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
@@ -88,7 +89,10 @@ fun PasswordDetailScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is PasswordDetailEvent.DeletedSuccessfully -> backStack.removeLastOrNull()
+                is PasswordDetailEvent.DeletedSuccessfully -> {
+                    AppMessages.show("Password deleted")
+                    backStack.removeLastOrNull()
+                }
                 is PasswordDetailEvent.Error -> snackbarHostState.showSnackbar(event.message)
             }
         }

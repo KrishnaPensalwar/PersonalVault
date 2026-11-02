@@ -20,6 +20,8 @@ class AppLockRepositoryImpl(
             putInt(KEY_RECOVERY_QUESTION_ID, recoveryQuestionId)
             putString(KEY_RECOVERY_SALT, answerSalt)
             putString(KEY_RECOVERY_HASH, PinHasher.hash(normalizeAnswer(recoveryAnswer), answerSalt))
+            putInt(KEY_FAILED_ATTEMPTS, 0)
+            putLong(KEY_LOCKED_UNTIL, 0L)
         }
     }
 
@@ -45,6 +47,33 @@ class AppLockRepositoryImpl(
         prefs.edit {
             putString(KEY_PIN_SALT, pinSalt)
             putString(KEY_PIN_HASH, PinHasher.hash(newPin, pinSalt))
+            putInt(KEY_FAILED_ATTEMPTS, 0)
+            putLong(KEY_LOCKED_UNTIL, 0L)
+        }
+    }
+
+    override fun failedPinAttempts(): Int {
+        if (pinLockedUntil() > System.currentTimeMillis()) return MAX_ATTEMPTS
+        return prefs.getInt(KEY_FAILED_ATTEMPTS, 0)
+    }
+
+    override fun pinLockedUntil(): Long = prefs.getLong(KEY_LOCKED_UNTIL, 0L)
+
+    override fun registerFailedPin(): Int {
+        val next = (prefs.getInt(KEY_FAILED_ATTEMPTS, 0) + 1).coerceAtMost(MAX_ATTEMPTS)
+        prefs.edit {
+            putInt(KEY_FAILED_ATTEMPTS, next)
+            if (next >= MAX_ATTEMPTS) {
+                putLong(KEY_LOCKED_UNTIL, System.currentTimeMillis() + LOCKOUT_MS)
+            }
+        }
+        return next
+    }
+
+    override fun clearPinFailures() {
+        prefs.edit {
+            putInt(KEY_FAILED_ATTEMPTS, 0)
+            putLong(KEY_LOCKED_UNTIL, 0L)
         }
     }
 
@@ -56,5 +85,9 @@ class AppLockRepositoryImpl(
         const val KEY_RECOVERY_QUESTION_ID = "recovery_question_id"
         const val KEY_RECOVERY_SALT = "recovery_salt"
         const val KEY_RECOVERY_HASH = "recovery_hash"
+        const val KEY_FAILED_ATTEMPTS = "pin_failed_attempts"
+        const val KEY_LOCKED_UNTIL = "pin_locked_until"
+        const val MAX_ATTEMPTS = 5
+        const val LOCKOUT_MS = 10 * 60 * 1000L
     }
 }

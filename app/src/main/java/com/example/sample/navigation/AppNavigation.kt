@@ -11,9 +11,14 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import com.example.sample.common.AppMessages
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.entryProvider
@@ -33,11 +38,17 @@ import com.example.sample.storage.documentsListingScreen.StorageScreen
 fun AppNavigation(
     modifier: Modifier = Modifier,
 ) {
-    val backStack = rememberNavBackStack(Destinations.Dashboard)
+    val backStack = rememberNavBackStack(Destinations.Storage)
     val currentDestination = backStack.last() as Destinations
     val topBarState = rememberTopBarState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        AppMessages.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppTopBar(
@@ -78,11 +89,11 @@ fun AppNavigation(
                 },
                 entryProvider = entryProvider {
 
-                    entry<Destinations.Dashboard> {
-                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Dashboard) {
-                            DashboardScreen()
-                        }
-                    }
+//                    entry<Destinations.Dashboard> {
+//                        CompositionLocalProvider(LocalCurrentDestination provides Destinations.Dashboard) {
+//                            DashboardScreen()
+//                        }
+//                    }
 
                     entry<Destinations.Password> {
                         CompositionLocalProvider(LocalCurrentDestination provides Destinations.Password) {
@@ -144,7 +155,7 @@ fun BottomBar(
     onDestinationSelected: (Destinations) -> Unit,
 ) {
     val items = listOf(
-        BottomNavItem(Destinations.Dashboard, "Dashboard", Icons.Default.Home),
+//        BottomNavItem(Destinations.Dashboard, "Dashboard", Icons.Default.Home),
         BottomNavItem(Destinations.Storage, "Storage", Icons.Default.Storage),
         BottomNavItem(Destinations.Password, "Password", Icons.Default.Password),
         BottomNavItem(Destinations.Family, "Family", Icons.Default.FamilyRestroom),

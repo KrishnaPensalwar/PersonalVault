@@ -24,6 +24,19 @@ private class FakeAppLockRepository : AppLockRepository {
     override fun verifyRecoveryAnswer(answer: String) =
         recoveryAnswer?.trim()?.lowercase() == answer.trim().lowercase()
     override fun resetPin(newPin: String) { pin = newPin }
+    var failures = 0
+    var lockedUntil = 0L
+    override fun failedPinAttempts() = if (lockedUntil > System.currentTimeMillis()) 5 else failures
+    override fun pinLockedUntil() = lockedUntil
+    override fun registerFailedPin(): Int {
+        failures = (failures + 1).coerceAtMost(5)
+        if (failures >= 5) lockedUntil = System.currentTimeMillis() + 10 * 60_000L
+        return failures
+    }
+    override fun clearPinFailures() {
+        failures = 0
+        lockedUntil = 0L
+    }
 }
 
 private class FakeBiometricAvailabilityChecker(var available: Boolean) : BiometricAvailabilityChecker {
@@ -89,7 +102,9 @@ class AppLockViewModelTest {
 
         viewModel.onPinEntrySubmit("000000")
 
-        assertEquals(LockScreenState.PinEntry("Incorrect PIN"), viewModel.lockState.value)
+        val state = viewModel.lockState.value as LockScreenState.PinEntry
+        assertEquals("Incorrect PIN", state.error)
+        assertEquals(1, state.failedAttempts)
     }
 
     @Test

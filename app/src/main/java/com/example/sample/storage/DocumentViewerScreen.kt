@@ -100,7 +100,9 @@ fun DocumentViewerScreen(
                 }
             )
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
                 DocumentViewerContent(
                     doc = doc,

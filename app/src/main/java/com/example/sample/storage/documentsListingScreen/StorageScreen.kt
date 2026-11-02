@@ -1,52 +1,26 @@
 package com.example.sample.storage.documentsListingScreen
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.pdf.PdfRenderer
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import com.example.sample.common.EmptyState
-import com.example.sample.common.ErrorState
-import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -54,58 +28,53 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.createBitmap
-import androidx.core.net.toUri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sample.common.ErrorState
+import com.example.sample.common.LoadingState
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.SelectedDocument
-import com.example.sample.storage.StorageDocumentCard
-import com.example.sample.storage.copyDocumentToInternalStorage
 import com.example.sample.storage.data.VaultDocumentEntity
 import com.example.sample.storage.getDocumentInfo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
-import java.util.UUID
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StorageScreen(
-    viewModel: StorageViewModel = koinViewModel()
-) {
+fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val backStack = LocalBackStack.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var selectedDocument by remember { mutableStateOf<SelectedDocument?>(null) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var editableName by remember { mutableStateOf("") }
-
     var showBottomSheet by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isConfirmedToDismiss by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var categoryFilter by remember { mutableStateOf("All Files") }
+    var sortAz by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf("") }
+    var customCategory by remember { mutableStateOf("") }
+    var source by remember { mutableStateOf(VaultSource.Upload) }
+    var noteBody by remember { mutableStateOf("") }
+    var pendingDelete by remember { mutableStateOf<VaultDocumentEntity?>(null) }
+    var pendingScanUri by remember { mutableStateOf<Uri?>(null) }
 
-    LaunchedEffect(searchQuery) {
-        viewModel.getDocuments(searchQuery)
-    }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val backStack = LocalBackStack.current
+    LaunchedEffect(searchQuery) { viewModel.getDocuments(searchQuery) }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -116,126 +85,100 @@ fun StorageScreen(
             } else {
                 true
             }
-        }
+        },
     )
 
-    val documentPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let {
-            val docInfo = getDocumentInfo(context, it)
-            selectedDocument = docInfo
-            selectedUri = it
-            editableName = docInfo.fileName
-            isConfirmedToDismiss = false
-            showBottomSheet = true
+    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+        val uri = pendingScanUri ?: return@rememberLauncherForActivityResult
+        if (!saved) return@rememberLauncherForActivityResult
+        val name = "Scan_${System.currentTimeMillis()}.jpg"
+        val length = runCatching {
+            context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length }
+        }.getOrNull() ?: 0L
+        selectedUri = uri
+        selectedDocument = SelectedDocument(uri.toString(), length, name, "image/jpeg")
+        editableName = name
+        source = VaultSource.Scan
+    }
+
+    fun launchScan() {
+        val file = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        pendingScanUri = uri
+        takePicture.launch(uri)
+    }
+
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchScan()
+        else scope.launch { snackbarHostState.showSnackbar("Camera permission needed to scan") }
+    }
+
+    val documentPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val docInfo = getDocumentInfo(context, uri)
+        selectedDocument = docInfo
+        selectedUri = uri
+        editableName = docInfo.fileName
+        source = VaultSource.Upload
+        isConfirmedToDismiss = false
+        showBottomSheet = true
+    }
+
+    fun resolvedCategory() = if (selectedCategory == OtherCategory) customCategory.trim() else selectedCategory.trim()
+
+    fun hideSheet() {
+        isConfirmedToDismiss = true
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            showBottomSheet = false
+            selectedUri = null
+            selectedDocument = null
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { query ->
-                    searchQuery = query
-                    viewModel.getDocuments(query)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search documents…") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                searchQuery = ""
-                                viewModel.getDocuments()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search"
-                            )
-                        }
-                    }
-                },
-                shape = RoundedCornerShape(28.dp),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                    }
-                )
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        when (val state = uiState) {
+            is StorageUiState.Loading -> LoadingState(title = "Loading Documents...")
+            is StorageUiState.Error -> ErrorState(
+                title = "Error Loading Documents",
+                description = state.message,
+                image = Icons.Default.Storage,
+                onRetry = { viewModel.getDocuments(searchQuery) },
             )
-
-            when (val state = uiState) {
-                is StorageUiState.Loading -> {
-                    LoadingState(title = "Loading Documents...")
-                }
-
-                is StorageUiState.Error -> {
-                    ErrorState(
-                        title = "Error Loading Documents",
-                        description = state.message,
-                        image = Icons.Default.Storage,
-                        onRetry = { viewModel.getDocuments(searchQuery) }
-                    )
-                }
-
-                is StorageUiState.Success -> {
-                    if (state.documents.isEmpty()) {
-                        EmptyState(
-                            title = if (searchQuery.isBlank()) "No documents saved yet" else "No matching documents found",
-                            description = if (searchQuery.isBlank()) "Tap the + button to upload a document" else "Try searching with a different term",
-                            image = Icons.Default.Storage
-                        )
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            items(state.documents, key = { it.id }) { doc ->
-                                StorageDocumentCard(
-                                    document = doc,
-                                    onClick = {
-                                        backStack.add(Destinations.DocumentViewer(id = doc.id))
-                                    },
-                                    onEditClick = {
-                                        backStack.add(Destinations.DocumentDetailScreen(id = doc.id))
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            is StorageUiState.Success -> StorageDocumentList(
+                documents = state.documents,
+                searchQuery = searchQuery,
+                categoryFilter = categoryFilter,
+                sortAz = sortAz,
+                onCategoryFilter = { categoryFilter = it },
+                onSearchChange = { searchQuery = it; viewModel.getDocuments(it) },
+                onClearSearch = { searchQuery = ""; viewModel.getDocuments() },
+                onToggleSort = { sortAz = !sortAz },
+                onOpen = { backStack.add(Destinations.DocumentViewer(id = it)) },
+                onEdit = { backStack.add(Destinations.DocumentDetailScreen(id = it)) },
+                onDelete = { pendingDelete = it },
+            )
         }
 
         FloatingActionButton(
             onClick = {
-                documentPicker.launch(arrayOf("*/*"))
+                selectedUri = null
+                selectedDocument = null
+                editableName = ""
+                selectedCategory = ""
+                customCategory = ""
+                source = VaultSource.Upload
+                noteBody = ""
+                isConfirmedToDismiss = false
+                showBottomSheet = true
             },
-            containerColor = MaterialTheme.colorScheme.primary,
+            containerColor = Navy,
+            contentColor = Color.White,
             shape = CircleShape,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
         ) {
             Icon(Icons.Default.Add, contentDescription = "Add document")
         }
+        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
 
     if (showBottomSheet) {
@@ -244,228 +187,54 @@ fun StorageScreen(
             selectedDocument = selectedDocument,
             selectedUri = selectedUri,
             editableName = editableName,
+            category = selectedCategory,
+            customCategory = customCategory,
+            onCustomCategoryChange = { customCategory = it },
+            onCategoryChange = { selectedCategory = it },
+            source = source,
+            noteBody = noteBody,
+            onNoteChange = { noteBody = it },
             onNameChange = { editableName = it },
-            onDismissRequest = {
-                if (!isConfirmedToDismiss) {
-                    showDiscardDialog = true
-                }
+            onPickFile = { source = VaultSource.Upload; documentPicker.launch(arrayOf("*/*")) },
+            onScan = { source = VaultSource.Scan; cameraPermission.launch(Manifest.permission.CAMERA) },
+            onSelectNote = {
+                source = VaultSource.Note
+                selectedUri = null
+                selectedDocument = null
+                if (editableName.isBlank()) editableName = "Secure Note"
             },
+            onDismissRequest = { if (!isConfirmedToDismiss) showDiscardDialog = true },
             onSave = {
-                val uri = selectedUri
-                val doc = selectedDocument
-                if (uri != null && doc != null) {
-                    val path = copyDocumentToInternalStorage(context, uri)
-                    viewModel.saveDocument(
-                        VaultDocumentEntity(
-                            id = UUID.randomUUID().toString(),
-                            name = editableName.ifBlank { doc.fileName },
-                            relativePath = path,
-                            mimeType = doc.mimeType,
-                            sizeBytes = doc.size ?: 0L
-                        )
-                    )
-                }
-
-                isConfirmedToDismiss = true
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    showBottomSheet = false
-                    selectedUri = null
-                    selectedDocument = null
-                }
-            }
+                val saved = saveCurrentDocument(
+                    viewModel, context, source, noteBody, editableName, resolvedCategory(), selectedUri, selectedDocument,
+                )
+                if (saved) scope.launch { snackbarHostState.showSnackbar("Document saved") }
+                hideSheet()
+            },
         )
     }
 
     if (showDiscardDialog) {
         DiscardDocumentDialog(
             onDismiss = { showDiscardDialog = false },
-            onConfirm = {
-                showDiscardDialog = false
-                isConfirmedToDismiss = true
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    showBottomSheet = false
-                    selectedUri = null
-                    selectedDocument = null
-                }
-            }
+            onConfirm = { showDiscardDialog = false; hideSheet() },
         )
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DocumentSaveBottomSheet(
-    sheetState: SheetState,
-    selectedDocument: SelectedDocument?,
-    selectedUri: Uri?,
-    editableName: String,
-    onNameChange: (String) -> Unit,
-    onDismissRequest: () -> Unit,
-    onSave: () -> Unit
-) {
-    val context = LocalContext.current
-
-    val preview by produceState<Bitmap?>(
-        initialValue = null,
-        key1 = selectedUri,
-        key2 = selectedDocument?.mimeType
-    ) {
-        value = withContext(Dispatchers.IO) {
-            if (selectedUri != null && selectedDocument != null) {
-                loadDocumentPreviewFromUri(
-                    context,
-                    selectedUri.toString(),
-                    selectedDocument.mimeType
-                )
-            } else null
-        }
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Save Document",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceVariant,
-                        RoundedCornerShape(16.dp)
-                    )
-                    .clip(RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (preview != null) {
-                    Image(
-                        bitmap = preview!!.asImageBitmap(),
-                        contentDescription = "Document Preview",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                        contentDescription = "Document Preview",
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = editableName,
-                onValueChange = onNameChange,
-                label = { Text("Document Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            if (selectedDocument != null) {
-                val sizeKb = (selectedDocument.size ?: 0) / 1024.0
-                Text(
-                    text = "Type: ${
-                        selectedDocument.mimeType?.substringAfter("/")?.uppercase() ?: "UNKNOWN"
-                    } • Size: %.2f KB".format(sizeKb),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = onSave,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Done")
-            }
-
-            Spacer(Modifier.height(32.dp))
-        }
-    }
-}
-
-@Composable
-fun DiscardDocumentDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Discard Document?") },
-        text = { Text("Are you sure you want to discard this document? It won't be saved.") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Discard")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-fun loadDocumentPreviewFromUri(
-    context: Context,
-    uri: String,
-    mimeType: String?
-): Bitmap? {
-    return try {
-        when {
-            mimeType?.startsWith("image/") == true -> {
-                context.contentResolver.openInputStream(uri.toUri())?.use { stream ->
-                    BitmapFactory.decodeStream(stream)
-                }
-            }
-
-            mimeType == "application/pdf" -> {
-                val fd = context.contentResolver.openFileDescriptor(uri.toUri(), "r")
-                fd?.use { pfd ->
-                    PdfRenderer(pfd).use { renderer ->
-                        if (renderer.pageCount == 0) return null
-                        renderer.openPage(0).use { page ->
-                            val targetWidth = 400
-                            val scale = targetWidth.toFloat() / page.width
-                            val targetHeight = (page.height * scale).toInt().coerceAtLeast(1)
-                            val bitmap = createBitmap(targetWidth, targetHeight)
-                            bitmap.eraseColor(Color.WHITE)
-                            page.render(
-                                bitmap,
-                                null,
-                                null,
-                                PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
-                            )
-                            return bitmap
-                        }
-                    }
-                }
-            }
-
-            else -> null
-        }
-    } catch (_: Exception) {
-        null
+    pendingDelete?.let { doc ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            icon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Heart) },
+            title = { Text("Delete document?") },
+            text = { Text("\"${doc.name}\" will be removed from this device.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteDocument(doc.id)
+                    pendingDelete = null
+                    scope.launch { snackbarHostState.showSnackbar("Document deleted") }
+                }) { Text("Delete", color = Heart) }
+            },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } },
+        )
     }
 }
