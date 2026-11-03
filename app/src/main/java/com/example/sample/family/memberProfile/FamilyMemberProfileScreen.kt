@@ -1,9 +1,12 @@
 package com.example.sample.family.memberProfile
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +29,7 @@ import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import com.example.sample.common.AppMessages
 import com.example.sample.common.EmptyState
 import com.example.sample.common.ErrorState
 import com.example.sample.common.LoadingState
@@ -48,10 +52,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.family.MemberInfoCard
 import com.example.sample.navigation.Destinations
@@ -60,12 +69,19 @@ import com.example.sample.storage.documentsListingScreen.DocumentSaveBottomSheet
 import com.example.sample.storage.SelectedDocument
 import com.example.sample.storage.StorageDocumentCard
 import com.example.sample.storage.copyDocumentToInternalStorage
+import com.example.sample.storage.documentsListingScreen.VaultSource
+import com.example.sample.storage.writeTextDocument
 import com.example.sample.storage.data.VaultDocumentEntity
 import com.example.sample.storage.getDocumentInfo
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.io.File
 import java.util.UUID
+
+private val Navy = Color(0xFF1B2559)
+private val Page = Color(0xFFF4F6FB)
+private val Heart = Color(0xFFE11D48)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +102,11 @@ fun FamilyMemberProfileScreen(
     var showDocBottomSheet by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isConfirmedToDismiss by remember { mutableStateOf(false) }
+    var source by remember { mutableStateOf(VaultSource.Upload) }
+    var noteBody by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("") }
+    var customCategory by remember { mutableStateOf("") }
+    var pendingScanUri by remember { mutableStateOf<Uri?>(null) }
 
     // Delete document confirmation
     var pendingDeleteDocId by remember { mutableStateOf<String?>(null) }
@@ -109,10 +130,44 @@ fun FamilyMemberProfileScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is MemberProfileEvent.DeletedSuccessfully -> backStack.removeLastOrNull()
+                is MemberProfileEvent.DeletedSuccessfully -> {
+                    AppMessages.show("Member deleted")
+                    backStack.removeLastOrNull()
+                }
+                is MemberProfileEvent.DocumentSaved -> snackbarHostState.showSnackbar("Document saved")
+                is MemberProfileEvent.DocumentDeleted -> snackbarHostState.showSnackbar("Document deleted")
                 is MemberProfileEvent.Error -> snackbarHostState.showSnackbar(event.message)
             }
         }
+    }
+
+    fun resolvedCategory(): String =
+        if (selectedCategory == "Other") customCategory.trim() else selectedCategory.trim()
+
+    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+        val uri = pendingScanUri
+        if (saved && uri != null) {
+            val name = "Scan_${System.currentTimeMillis()}.jpg"
+            val length = runCatching {
+                context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length }
+            }.getOrNull() ?: 0L
+            selectedUri = uri
+            selectedDocument = SelectedDocument(uri.toString(), length, name, "image/jpeg")
+            editableName = name
+            source = VaultSource.Scan
+        }
+    }
+
+    fun launchScan() {
+        val file = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        pendingScanUri = uri
+        takePicture.launch(uri)
+    }
+
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchScan()
+        else scope.launch { snackbarHostState.showSnackbar("Camera permission needed to scan") }
     }
 
     val documentPicker = rememberLauncherForActivityResult(
@@ -123,6 +178,7 @@ fun FamilyMemberProfileScreen(
             selectedDocument = docInfo
             selectedUri = it
             editableName = docInfo.fileName
+            source = VaultSource.Upload
             isConfirmedToDismiss = false
             showDocBottomSheet = true
         }
@@ -133,7 +189,9 @@ fun FamilyMemberProfileScreen(
     )
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
     ) {
         when {
             uiState.isLoading -> {
@@ -163,8 +221,19 @@ fun FamilyMemberProfileScreen(
         }
 
         FloatingActionButton(
-            onClick = { documentPicker.launch(arrayOf("*/*")) },
-            containerColor = MaterialTheme.colorScheme.primary,
+            onClick = {
+                selectedUri = null
+                selectedDocument = null
+                editableName = ""
+                source = VaultSource.Upload
+                noteBody = ""
+                selectedCategory = ""
+                customCategory = ""
+                isConfirmedToDismiss = false
+                showDocBottomSheet = true
+            },
+            containerColor = Navy,
+            contentColor = Color.White,
             shape = CircleShape,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -187,25 +256,67 @@ fun FamilyMemberProfileScreen(
             selectedDocument = selectedDocument,
             selectedUri = selectedUri,
             editableName = editableName,
+            category = selectedCategory,
+            customCategory = customCategory,
+            onCustomCategoryChange = { customCategory = it },
+            onCategoryChange = { selectedCategory = it },
+            source = source,
+            noteBody = noteBody,
+            onNoteChange = { noteBody = it },
             onNameChange = { editableName = it },
+            onPickFile = {
+                source = VaultSource.Upload
+                documentPicker.launch(arrayOf("*/*"))
+            },
+            onScan = {
+                source = VaultSource.Scan
+                cameraPermission.launch(Manifest.permission.CAMERA)
+            },
+            onSelectNote = {
+                source = VaultSource.Note
+                selectedUri = null
+                selectedDocument = null
+                if (editableName.isBlank()) editableName = "Secure Note"
+            },
             onDismissRequest = {
                 if (!isConfirmedToDismiss) showDiscardDialog = true
             },
             onSave = {
-                val uri = selectedUri
-                val doc = selectedDocument
-                if (uri != null && doc != null) {
-                    val path = copyDocumentToInternalStorage(context, uri)
-                    viewModel.saveDocument(
-                        VaultDocumentEntity(
-                            id = UUID.randomUUID().toString(),
-                            name = editableName.ifBlank { doc.fileName },
-                            relativePath = path,
-                            mimeType = doc.mimeType,
-                            sizeBytes = doc.size ?: 0L,
-                            familyMemberId = memberId,
-                        )
-                    )
+                val category = resolvedCategory()
+                when (source) {
+                    VaultSource.Note -> {
+                        val text = noteBody.trim()
+                        if (text.isNotEmpty()) {
+                            viewModel.saveDocument(
+                                VaultDocumentEntity(
+                                    id = UUID.randomUUID().toString(),
+                                    name = editableName.ifBlank { "Secure Note" },
+                                    relativePath = writeTextDocument(context, text),
+                                    mimeType = "text/plain",
+                                    sizeBytes = text.toByteArray().size.toLong(),
+                                    familyMemberId = memberId,
+                                    category = category,
+                                )
+                            )
+                        }
+                    }
+                    else -> {
+                        val uri = selectedUri
+                        val doc = selectedDocument
+                        if (uri != null && doc != null) {
+                            viewModel.saveDocument(
+                                VaultDocumentEntity(
+                                    id = UUID.randomUUID().toString(),
+                                    name = editableName.ifBlank { doc.fileName },
+                                    relativePath = copyDocumentToInternalStorage(context, uri),
+                                    mimeType = doc.mimeType,
+                                    sizeBytes = doc.size ?: 0L,
+                                    familyMemberId = memberId,
+                                    category = category,
+                                )
+                            )
+                        }
+                    }
                 }
                 isConfirmedToDismiss = true
                 scope.launch {
@@ -252,7 +363,7 @@ fun FamilyMemberProfileScreen(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = Heart,
                 )
             },
             title = { Text("Delete Document?") },
@@ -262,7 +373,7 @@ fun FamilyMemberProfileScreen(
                     viewModel.deleteDocument(id)
                     pendingDeleteDocId = null
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = Heart)
                 }
             },
             dismissButton = {
@@ -295,12 +406,20 @@ private fun MemberProfileContent(
 
         // ── Documents section header ──────────────────────────────────────────
         item(key = "docs_header") {
-            Text(
-                text = "Documents (${uiState.documents.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                Text("Documents", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Navy)
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    "${uiState.documents.size}",
+                    color = Color(0xFF3D5AFE),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFFE8EEFF))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            }
         }
 
         if (uiState.documents.isEmpty()) {

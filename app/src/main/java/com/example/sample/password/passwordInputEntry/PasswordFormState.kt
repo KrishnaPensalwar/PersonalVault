@@ -1,7 +1,5 @@
 package com.example.sample.password.passwordInputEntry
 
-import com.example.sample.password.domain.PasswordCategories
-
 data class PasswordFormState(
     val id: String = "",
     val title: String = "",
@@ -9,7 +7,7 @@ data class PasswordFormState(
     val password: String = "",
     val websiteUrl: String = "",
     val notes: String = "",
-    val category: String = PasswordCategories[8], // "Other"
+    val category: String = "Work",
     val isFavorite: Boolean = false,
     // ── Validation errors ────────────────────────────────────────────────────
     val titleError: String? = null,

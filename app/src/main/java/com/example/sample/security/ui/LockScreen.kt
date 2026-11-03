@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,18 +22,11 @@ import com.example.sample.security.LockScreenState
 fun LockScreen(viewModel: AppLockViewModel) {
     val state by viewModel.lockState.collectAsStateWithLifecycle()
 
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = VaultNavy,
-            background = VaultBackground,
-            surface = VaultCard,
-            onSurface = VaultText,
-            onBackground = VaultText,
-        ),
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
+            .padding(WindowInsets.statusBars.asPaddingValues())
     ) {
-        Column(
-            modifier = Modifier.padding(WindowInsets.statusBars.asPaddingValues())
-        ) {
             when (val current = state) {
                 LockScreenState.Checking -> Box(
                     Modifier
@@ -50,6 +42,7 @@ fun LockScreen(viewModel: AppLockViewModel) {
 
                 is LockScreenState.PinEntry -> EnterVaultPinScreen(
                     error = current.error,
+                    failedAttempts = current.failedAttempts,
                     onSubmit = viewModel::onPinEntrySubmit,
                     onForgotPin = viewModel::onForgotPinClicked,
                 )
@@ -73,7 +66,5 @@ fun LockScreen(viewModel: AppLockViewModel) {
 
                 LockScreenState.Unlocked -> Unit
             }
-        }
-
     }
 }

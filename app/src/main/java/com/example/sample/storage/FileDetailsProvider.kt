@@ -77,3 +77,13 @@ fun copyDocumentToInternalStorage(
     // This is the relative path to store in Room.
     return "vault/documents/$fileName"
 }
+
+fun writeTextDocument(context: Context, text: String): String {
+    val directory = File(context.filesDir, "vault/documents")
+    if (!directory.exists() && !directory.mkdirs()) {
+        throw IOException("Could not create directory")
+    }
+    val destination = File(directory, UUID.randomUUID().toString())
+    destination.writeText(text)
+    return "vault/documents/${destination.name}"
+}

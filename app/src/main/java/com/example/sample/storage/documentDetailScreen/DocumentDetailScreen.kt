@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import com.example.sample.common.AppMessages
 import com.example.sample.common.ErrorState
 import com.example.sample.common.LoadingState
 import androidx.compose.material3.Icon
@@ -103,6 +104,7 @@ fun DocumentDetailScreen(
                         },
                         onDelete = {
                             viewModel.deleteDocument(id, onSuccess = {
+                                AppMessages.show("Document deleted")
                                 backStack.removeLastOrNull()
                             })
                         },

@@ -118,16 +118,13 @@ fun RecoverPinScreen(
             Spacer(Modifier.height(12.dp))
             Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = Color(0xFFEBEEF2)) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Don't remember your recovery answer?", color = VaultSecondary, fontSize = 13.sp)
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lock, null, tint = VaultNavy, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text("Emergency Master Recovery Kit", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("Use your offline 24-word paper key.", color = VaultSecondary, fontSize = 12.sp)
-                        }
-                    }
+                    Text("No offline recovery kit", color = VaultText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "The security question is the only reset. The PIN hash never leaves this phone, so there is no server reset and no 24-word paper key. If both the PIN and the answer are forgotten, the lock cannot be recovered from here.",
+                        color = VaultSecondary,
+                        fontSize = 12.sp,
+                    )
                 }
             }
             Spacer(Modifier.height(16.dp))

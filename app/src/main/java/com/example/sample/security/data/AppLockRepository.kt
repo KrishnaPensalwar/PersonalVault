@@ -19,4 +19,14 @@ interface AppLockRepository {
     fun verifyRecoveryAnswer(answer: String): Boolean
 
     fun resetPin(newPin: String)
+
+    fun failedPinAttempts(): Int
+
+    /** Epoch millis until PIN entry is allowed again. 0 when not locked. */
+    fun pinLockedUntil(): Long
+
+    /** Records a wrong PIN. Locks for 10 minutes after 5 failures. Returns the new attempt count. */
+    fun registerFailedPin(): Int
+
+    fun clearPinFailures()
 }
