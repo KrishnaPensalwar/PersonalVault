@@ -25,12 +25,22 @@ data class Password(
 /** Pre-defined categories available in the UI. */
 val PasswordCategories = listOf(
     "All",
-    "Social",
     "Work",
+    "Personal",
     "Finance",
-    "Shopping",
     "Entertainment",
+    "Social",
+    "Shopping",
     "Health",
     "Education",
+    "Other",
+)
+
+/** Chips shown on the add / edit form. */
+val PasswordFormCategories = listOf(
+    "Work",
+    "Personal",
+    "Finance",
+    "Entertainment",
     "Other",
 )

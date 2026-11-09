@@ -13,13 +13,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.sample.family.data.FamilyMemberEntity
 
 
@@ -28,9 +33,13 @@ fun MemberFormContent(
     initial: FamilyMemberEntity?,
     onSave: (name: String, relationship: String) -> Unit,
     onCancel: () -> Unit,
+    onDirtyChange: (Boolean) -> Unit = {},
 ) {
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
     var relationship by remember(initial) { mutableStateOf(initial?.relationship ?: "") }
+    LaunchedEffect(name, relationship) {
+        onDirtyChange(name != (initial?.name ?: "") || relationship != (initial?.relationship ?: ""))
+    }
     var nameError by remember { mutableStateOf<String?>(null) }
     var relError by remember { mutableStateOf<String?>(null) }
 
@@ -43,8 +52,9 @@ fun MemberFormContent(
     ) {
         Text(
             text = if (initial == null) "Add Family Member" else "Edit Family Member",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF1B2559),
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
         )
 
         Spacer(Modifier.height(4.dp))
@@ -99,7 +109,8 @@ fun MemberFormContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            shape = MaterialTheme.shapes.medium,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B2559)),
         ) {
             Text(
                 text = if (initial == null) "Add Member" else "Save Changes",

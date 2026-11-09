@@ -15,12 +15,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.stringResource
+import com.example.sample.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,51 +39,35 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun EnterVaultPinScreen(
     error: String?,
+    failedAttempts: Int,
     onSubmit: (String) -> Unit,
     onForgotPin: () -> Unit,
     onBiometric: (() -> Unit)? = null,
 ) {
     var pin by remember { mutableStateOf("") }
+    val appName = stringResource(R.string.app_name)
+    val scheme = MaterialTheme.colorScheme
 
     Column(
-        Modifier.fillMaxSize().background(VaultBackground).padding(horizontal = 20.dp),
+        Modifier.fillMaxSize().background(scheme.background).padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(36.dp).clip(CircleShape).background(VaultNavy), contentAlignment = Alignment.Center) {
-                Text("F", color = Color.White, fontWeight = FontWeight.Bold)
+            Box(Modifier.size(36.dp).clip(CircleShape).background(scheme.primary), contentAlignment = Alignment.Center) {
+                Text(appName.take(1).uppercase(), color = scheme.onPrimary, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(8.dp))
-            Text("Fortress", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
-            Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFE7F8F1)) {
-                Text(
-                    "AES-256 Validated",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    color = VaultGreenText,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-        Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = VaultCard, shadowElevation = 1.dp) {
-            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Person, null, tint = VaultNavy)
-                Spacer(Modifier.width(8.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("Sarah's Vault", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Text("Personal & Family", color = VaultSecondary, fontSize = 12.sp)
-                }
-            }
+            Text(appName, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = scheme.onBackground, modifier = Modifier.weight(1f))
         }
         Spacer(Modifier.height(28.dp))
         Box(Modifier.size(64.dp).clip(CircleShape).background(Color(0xFFE4EDFF)), contentAlignment = Alignment.Center) {
             Icon(Icons.Default.Lock, null, tint = VaultNavy, modifier = Modifier.size(30.dp))
         }
         Spacer(Modifier.height(12.dp))
-        Text("Enter Vault PIN", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = VaultText)
+        Text("Enter Vault PIN", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = scheme.onBackground)
         Text(
-            "Enter your 6-digit PIN to decrypt your vault",
-            color = VaultSecondary,
+            "Enter your 6-digit PIN. It is checked on this device only.",
+            color = scheme.onSurfaceVariant,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
         )
@@ -93,9 +78,9 @@ fun EnterVaultPinScreen(
             Text(it, color = VaultRed, fontSize = 13.sp)
         }
         TextButton(onClick = onForgotPin) {
-            Text("Forgot PIN?", color = VaultNavy, fontWeight = FontWeight.SemiBold)
+            Text("Forgot PIN?", color = scheme.primary, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.width(6.dp))
-            Text("Reset via security recovery question", color = VaultSecondary, fontSize = 12.sp)
+            Text("Reset via security recovery question", color = scheme.onSurfaceVariant, fontSize = 12.sp)
         }
         PinKeypad(
             onDigit = { digit ->
@@ -111,11 +96,22 @@ fun EnterVaultPinScreen(
         )
         Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Security, null, tint = VaultGreenText, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Security, null, tint = scheme.primary, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Zero-Knowledge Architecture", color = VaultSecondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Zero-knowledge", color = scheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
-        Text("Failed attempts: 0/5 • 10m cooldown threshold", color = VaultSecondary, fontSize = 11.sp)
+        Text(
+            "PIN hash stays on this phone. Nothing is sent out to unlock the vault.",
+            color = scheme.onSurfaceVariant,
+            fontSize = 11.sp,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Failed attempts: $failedAttempts/5 • 10m lock after 5 misses",
+            color = if (failedAttempts >= 5) VaultRed else scheme.onSurfaceVariant,
+            fontSize = 11.sp,
+        )
         Spacer(Modifier.height(16.dp))
     }
 }

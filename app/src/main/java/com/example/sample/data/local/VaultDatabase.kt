@@ -19,7 +19,7 @@ import com.example.sample.storage.data.VaultDocumentEntity
         PasswordEntity::class,
         FamilyMemberEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class VaultDatabase : RoomDatabase() {
@@ -83,6 +83,14 @@ abstract class VaultDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE `vault_documents` ADD COLUMN `category` TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): VaultDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -90,7 +98,7 @@ abstract class VaultDatabase : RoomDatabase() {
                     VaultDatabase::class.java,
                     "personal_vault_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { INSTANCE = it }
             }

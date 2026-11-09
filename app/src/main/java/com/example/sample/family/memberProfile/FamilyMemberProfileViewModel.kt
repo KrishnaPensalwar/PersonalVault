@@ -62,6 +62,7 @@ class FamilyMemberProfileViewModel(
         viewModelScope.launch {
             runCatching {
                 documentRepository.saveDocument(document)
+                _events.emit(MemberProfileEvent.DocumentSaved)
             }.onFailure {
                 _events.emit(MemberProfileEvent.Error(it.message ?: "Failed to save document"))
             }
@@ -72,6 +73,7 @@ class FamilyMemberProfileViewModel(
         viewModelScope.launch {
             runCatching {
                 documentRepository.deleteDocumentById(id)
+                _events.emit(MemberProfileEvent.DocumentDeleted)
             }.onFailure {
                 _events.emit(MemberProfileEvent.Error(it.message ?: "Failed to delete document"))
             }

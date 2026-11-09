@@ -61,4 +61,10 @@ class StorageViewModel(
             repository.saveDocument(document)
         }
     }
+
+    fun deleteDocument(id: String) {
+        viewModelScope.launch {
+            repository.deleteDocumentById(id)
+        }
+    }
 }

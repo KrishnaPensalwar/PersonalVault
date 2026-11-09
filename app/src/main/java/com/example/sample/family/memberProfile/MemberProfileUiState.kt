@@ -15,5 +15,7 @@ data class MemberProfileUiState(
 
 sealed interface MemberProfileEvent {
     data object DeletedSuccessfully : MemberProfileEvent
+    data object DocumentSaved : MemberProfileEvent
+    data object DocumentDeleted : MemberProfileEvent
     data class Error(val message: String) : MemberProfileEvent
 }

@@ -55,10 +55,31 @@ class AppLockViewModel(
     }
 
     fun onPinEntrySubmit(pin: String) {
+        val lockedUntil = repository.pinLockedUntil()
+        if (lockedUntil > System.currentTimeMillis()) {
+            _lockState.update {
+                LockScreenState.PinEntry(
+                    error = "Too many attempts. Try again in ${minutesLeft(lockedUntil)}m",
+                    failedAttempts = repository.failedPinAttempts(),
+                    lockedUntilEpochMs = lockedUntil,
+                )
+            }
+            return
+        }
         if (repository.verifyPin(pin)) {
+            repository.clearPinFailures()
             unlock()
         } else {
-            _lockState.update { LockScreenState.PinEntry("Incorrect PIN") }
+            val attempts = repository.registerFailedPin()
+            val until = repository.pinLockedUntil()
+            val error = if (until > System.currentTimeMillis()) {
+                "Too many attempts. Locked for 10 minutes"
+            } else {
+                "Incorrect PIN"
+            }
+            _lockState.update {
+                LockScreenState.PinEntry(error, attempts, until)
+            }
         }
     }
 
@@ -92,7 +113,17 @@ class AppLockViewModel(
     }
 
     fun onBackToPinEntry() {
-        _lockState.update { LockScreenState.PinEntry() }
+        _lockState.update {
+            LockScreenState.PinEntry(
+                failedAttempts = repository.failedPinAttempts(),
+                lockedUntilEpochMs = repository.pinLockedUntil(),
+            )
+        }
+    }
+
+    private fun minutesLeft(untilEpochMs: Long): Long {
+        val left = untilEpochMs - System.currentTimeMillis()
+        return (left / 60_000L).coerceAtLeast(1L)
     }
 
     private fun evaluateLockState() {
@@ -100,7 +131,10 @@ class AppLockViewModel(
             when {
                 biometricChecker.isAvailable() -> LockScreenState.Biometric
                 !repository.isPinSetupComplete() -> LockScreenState.PinSetup()
-                else -> LockScreenState.PinEntry()
+                else -> LockScreenState.PinEntry(
+                    failedAttempts = repository.failedPinAttempts(),
+                    lockedUntilEpochMs = repository.pinLockedUntil(),
+                )
             }
         }
     }
