@@ -109,7 +109,6 @@ fun PasswordScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
     ) {
         when (val state = uiState) {
             is PasswordListUiState.Loading -> LoadingState(title = "Loading Passwords...")
@@ -124,6 +123,25 @@ fun PasswordScreen(
                     state.passwords.sortedBy { it.title.lowercase() }
                 } else {
                     state.passwords
+                }
+                if (state.passwords.isEmpty()) {
+                    val currentFilter = filter
+                    val emptyTitle = when (currentFilter) {
+                        is PasswordListFilter.Favourites -> "No favourites yet"
+                        is PasswordListFilter.Category -> "No ${currentFilter.name} passwords"
+                        is PasswordListFilter.All -> "No passwords yet"
+                    }
+                    val emptyDesc = when (currentFilter) {
+                        is PasswordListFilter.Favourites -> "Mark a password as favourite to see it here"
+                        is PasswordListFilter.Category -> "No passwords saved under ${currentFilter.name}"
+                        is PasswordListFilter.All -> "Tap + to add your first password"
+                    }
+                    EmptyState(
+                        title = emptyTitle,
+                        description = emptyDesc,
+                        image = Icons.Default.Lock,
+                    )
+
                 }
                 LazyColumn(
                     contentPadding = PaddingValues(
@@ -146,26 +164,7 @@ fun PasswordScreen(
                         )
                     }
 
-                    if (shown.isEmpty()) {
-                        item {
-                            val currentFilter = filter
-                            val emptyTitle = when (currentFilter) {
-                                is PasswordListFilter.Favourites -> "No favourites yet"
-                                is PasswordListFilter.Category -> "No ${currentFilter.name} passwords"
-                                is PasswordListFilter.All -> "No passwords yet"
-                            }
-                            val emptyDesc = when (currentFilter) {
-                                is PasswordListFilter.Favourites -> "Mark a password as favourite to see it here"
-                                is PasswordListFilter.Category -> "No passwords saved under ${currentFilter.name}"
-                                is PasswordListFilter.All -> "Tap + to add your first password"
-                            }
-                            EmptyState(
-                                title = emptyTitle,
-                                description = emptyDesc,
-                                image = Icons.Default.Lock,
-                            )
-                        }
-                    } else {
+                    if (shown.isNotEmpty()) {
                         item {
                             SearchField(
                                 query = searchQuery,
