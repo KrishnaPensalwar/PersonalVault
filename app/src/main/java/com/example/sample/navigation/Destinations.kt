@@ -1,0 +1,107 @@
+package com.example.sample.navigation
+
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed interface Destinations : NavKey {
+
+    val showBottomBar: Boolean
+        get() = true
+
+    val defaultTitle: String
+        get() = when (this) {
+            is Dashboard -> "Dashboard"
+            is Storage -> "Storage"
+            is Password -> "Passwords"
+            is Family -> "Family"
+            is DocumentDetailScreen -> "Document Details"
+            is DocumentViewer -> "Document"
+            is PasswordForm -> if (passwordId == null) "Add Password" else "Edit Password"
+            is PasswordDetail -> "Password Detail"
+            is FamilyMemberProfile -> "Member Profile"
+            is Settings -> "Settings"
+            is ChangePin -> "Change Vault PIN"
+            is Unlock -> "Unlock"
+            is Terms -> "Terms of Service"
+            is Privacy -> "Privacy Policy"
+        }
+
+
+    @Serializable
+    data object Dashboard : Destinations
+
+    @Serializable
+    data object Storage : Destinations
+
+    @Serializable
+    data object Password : Destinations
+
+    @Serializable
+    data object Family : Destinations
+
+    @Serializable
+    data class DocumentDetailScreen(val id: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    @Serializable
+    data class DocumentViewer(val id: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    // ── Password sub-screens ──────────────────────────────────────────────────
+
+    /**
+     * Add (passwordId == null) or Edit (passwordId != null) form.
+     */
+    @Serializable
+    data class PasswordForm(val passwordId: String? = null) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    @Serializable
+    data class PasswordDetail(val passwordId: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    // ── Family sub-screens ────────────────────────────────────────────────────
+
+    /**
+     * Profile screen for an individual family member.
+     */
+    @Serializable
+    data class FamilyMemberProfile(val memberId: String) : Destinations {
+        override val showBottomBar: Boolean
+            get() = false
+    }
+
+    @Serializable
+    data object Settings : Destinations {
+        override val showBottomBar: Boolean get() = false
+    }
+
+    @Serializable
+    data object Unlock : Destinations {
+        override val showBottomBar: Boolean get() = false
+    }
+
+    @Serializable
+    data object ChangePin : Destinations {
+        override val showBottomBar: Boolean get() = false
+    }
+
+    @Serializable
+    data object Terms : Destinations {
+        override val showBottomBar: Boolean get() = false
+    }
+
+    @Serializable
+    data object Privacy : Destinations {
+        override val showBottomBar: Boolean get() = false
+    }
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cloud backup and device-to-device transfer for API 31+.
+  Same vault exclusions as backup_rules.xml. Other app data stays included.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="personal_vault_database" />
+        <exclude domain="file" path="vault" />
+        <exclude domain="sharedpref" path="app_lock_prefs.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="personal_vault_database" />
+        <exclude domain="file" path="vault" />
+        <exclude domain="sharedpref" path="app_lock_prefs.xml" />
+    </device-transfer>
+</data-extraction-rules>

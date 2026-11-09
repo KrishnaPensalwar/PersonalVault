@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup rules for API 23–30. API 31+ uses data_extraction_rules.xml.
+  Excludes vault secrets only. Other app data remains eligible for backup.
+-->
+<full-backup-content>
+    <exclude domain="database" path="personal_vault_database" />
+    <exclude domain="file" path="vault" />
+    <exclude domain="sharedpref" path="app_lock_prefs.xml" />
+</full-backup-content>
