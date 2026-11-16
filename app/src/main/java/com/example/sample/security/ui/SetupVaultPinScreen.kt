@@ -1,6 +1,7 @@
 package com.example.sample.security.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,13 +11,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +79,17 @@ fun SetupVaultPinScreen(
 ) {
     var pin by remember { mutableStateOf("") }
     var rejected by remember { mutableStateOf<String?>(null) }
+    var pending by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(pending) {
+        val value = pending ?: return@LaunchedEffect
+        withFrameNanos { }
+        onPinReady(value)
+        pending = null
+        pin = ""
+    }
+
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(VaultBackground)) {
         VaultHeader(if (confirming) "Confirm Vault PIN" else "Setup Vault PIN", onBack)
         Column(
@@ -126,8 +140,7 @@ fun SetupVaultPinScreen(
                             pin = ""
                             return@PinKeypad
                         }
-                        onPinReady(pin)
-                        pin = ""
+                        pending = pin
                     }
                 },
                 onBackspace = { if (pin.isNotEmpty()) pin = pin.dropLast(1) },
@@ -141,6 +154,12 @@ fun SetupVaultPinScreen(
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(16.dp))
+        }
+    }
+        if (pending != null) {
+            Box(Modifier.fillMaxSize().background(VaultBackground), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = VaultNavy)
+            }
         }
     }
 }

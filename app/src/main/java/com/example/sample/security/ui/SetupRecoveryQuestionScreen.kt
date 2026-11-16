@@ -7,8 +7,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -33,17 +38,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sample.security.RecoveryQuestion
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +70,18 @@ fun SetupRecoveryQuestionScreen(
     var showAnswer by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     val matches = answer.isNotBlank() && answer.trim() == confirm.trim()
+    val focusManager = LocalFocusManager.current
+    val doneAction = KeyboardActions(onDone = { focusManager.clearFocus() })
+    val scope = rememberCoroutineScope()
+    val answerBringIntoView = remember { BringIntoViewRequester() }
+    val confirmBringIntoView = remember { BringIntoViewRequester() }
+    suspend fun reveal(requester: BringIntoViewRequester) {
+        requester.bringIntoView()
+        delay(300)
+        requester.bringIntoView()
+    }
 
-    Column(Modifier.fillMaxSize().background(VaultBackground)) {
+    Column(Modifier.fillMaxSize().background(VaultBackground).imePadding()) {
         VaultHeader("Setup Recovery Question", onBack)
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
@@ -104,9 +125,14 @@ fun SetupRecoveryQuestionScreen(
                 OutlinedTextField(
                     value = answer,
                     onValueChange = { answer = it; localError = null },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Oakridge Elementary") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(answerBringIntoView)
+                        .onFocusEvent { if (it.isFocused) scope.launch { reveal(answerBringIntoView) } },
+                    placeholder = { Text("Enter your answer") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = doneAction,
                     visualTransformation = if (showAnswer) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { showAnswer = !showAnswer }) {
@@ -128,9 +154,14 @@ fun SetupRecoveryQuestionScreen(
                 OutlinedTextField(
                     value = confirm,
                     onValueChange = { confirm = it; localError = null },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Oakridge Elementary") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(confirmBringIntoView)
+                        .onFocusEvent { if (it.isFocused) scope.launch { reveal(confirmBringIntoView) } },
+                    placeholder = { Text("Confirm answer") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = doneAction,
                     visualTransformation = PasswordVisualTransformation(),
                     shape = RoundedCornerShape(12.dp),
                 )
@@ -169,9 +200,9 @@ fun SetupRecoveryQuestionScreen(
                 }
                 if (localError == null) onComplete(question.id, answer.trim())
             }
-            TextButton(onClick = { expanded = true }) {
-                Text("Choose a custom question instead", color = VaultSecondary)
-            }
+//            TextButton(onClick = { expanded = true }) {
+//                Text("Choose a custom question instead", color = VaultSecondary)
+//            }
             Spacer(Modifier.height(12.dp))
         }
     }

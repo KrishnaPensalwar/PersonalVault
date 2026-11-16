@@ -109,6 +109,20 @@ fun DocumentSaveBottomSheet(
             SheetBody(source, noteBody, onNoteChange, preview, onScan, onPickFile)
             TitleField(editableName, onNameChange)
             CategoryRow(category, customCategory, onCategoryChange, onCustomCategoryChange)
+            if (source != VaultSource.Note) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Vault keeps its own encrypted copy. The original file stays where it is, so this uses extra storage.",
+                    color = Color(0xFF8A5A00),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFFF4E0))
+                        .padding(12.dp),
+                )
+            }
             Spacer(Modifier.height(20.dp))
             SaveButton(canSave, onSave)
             TextButton(onClick = onDismissRequest, modifier = Modifier.align(Alignment.CenterHorizontally)) {

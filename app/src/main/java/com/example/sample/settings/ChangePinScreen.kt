@@ -1,5 +1,7 @@
 package com.example.sample.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +19,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -37,9 +42,13 @@ fun ChangePinScreen(viewModel: ChangePinViewModel = koinViewModel()) {
     var confirm by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(state.saved) {
-        if (state.saved) backStack.removeLastOrNull()
+        if (state.saved) {
+            backStack.removeLastOrNull()
+            viewModel.consumeSaved()
+        }
     }
 
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().padding(20.dp)) {
         Text(
             "Enter the current PIN, then a new 6-digit PIN. The vault key stays the same. Only its PIN wrap changes.",
@@ -58,6 +67,15 @@ fun ChangePinScreen(viewModel: ChangePinViewModel = koinViewModel()) {
         }
         Spacer(Modifier.height(20.dp))
         VaultPrimaryButton("Save new PIN") { viewModel.onSubmit(current, next, confirm) }
+    }
+        if (state.saving) {
+            Box(
+                Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.72f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
     }
 }
 

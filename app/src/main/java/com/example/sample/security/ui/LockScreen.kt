@@ -38,6 +38,7 @@ fun LockScreen(viewModel: AppLockViewModel) {
                 LockScreenState.Biometric -> BiometricUnlockScreen(
                     cipher = viewModel.biometricUnlockCipher(),
                     enroll = false,
+                    allowDeviceCredential = viewModel.allowsDeviceCredential(),
                     onAuthorized = viewModel::onBiometricUnlock,
                     onError = viewModel::onBiometricFailed,
                 )
@@ -45,13 +46,17 @@ fun LockScreen(viewModel: AppLockViewModel) {
                 LockScreenState.BiometricEnroll -> BiometricUnlockScreen(
                     cipher = viewModel.biometricEnrollCipher(),
                     enroll = true,
+                    allowDeviceCredential = viewModel.allowsDeviceCredential(),
+                    dismissOnCancel = true,
                     onAuthorized = viewModel::onBiometricEnroll,
+                    onCancel = { viewModel.onBiometricFailed("Device lock was cancelled.") },
                     onError = viewModel::onBiometricFailed,
                 )
 
                 is LockScreenState.PinEntry -> EnterVaultPinScreen(
                     error = current.error,
                     failedAttempts = current.failedAttempts,
+                    checking = current.checking,
                     onSubmit = viewModel::onPinEntrySubmit,
                     onForgotPin = viewModel::onForgotPinClicked,
                 )

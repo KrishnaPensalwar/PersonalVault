@@ -225,7 +225,9 @@ class AppLockRepositoryImpl(
     override fun biometricUnlockCipher(): Cipher? {
         val payload = decode(prefs.getString(KEY_BIO_WRAP, null) ?: return null)
         if (payload.size <= IV_LENGTH) return null
-        return keystore?.decryptCipher(payload.copyOfRange(0, IV_LENGTH))
+        val biometricOnly = unlockMethod() == UnlockMethod.PIN
+        if (biometricOnly && !prefs.getBoolean(KEY_BIO_ONLY, false)) return null
+        return keystore?.decryptCipher(payload.copyOfRange(0, IV_LENGTH), biometricOnly)
     }
 
     override fun completeBiometricUnlock(cipher: Cipher): Boolean {
@@ -240,7 +242,8 @@ class AppLockRepositoryImpl(
         return true
     }
 
-    override fun biometricEnrollCipher(): Cipher? = keystore?.encryptCipher()
+    override fun biometricEnrollCipher(): Cipher? =
+        keystore?.encryptCipher(unlockMethod() == UnlockMethod.PIN)
 
     override fun completeBiometricEnroll(cipher: Cipher): Boolean {
         if (!VaultSession.isOpen()) return false
@@ -250,7 +253,10 @@ class AppLockRepositoryImpl(
             return false
         }
         val iv = cipher.iv ?: return false
-        prefs.edit { putString(KEY_BIO_WRAP, encode(iv + encrypted)) }
+        prefs.edit {
+            putString(KEY_BIO_WRAP, encode(iv + encrypted))
+            putBoolean(KEY_BIO_ONLY, unlockMethod() == UnlockMethod.PIN)
+        }
         return true
     }
 
@@ -296,6 +302,7 @@ class AppLockRepositoryImpl(
         const val KEY_PIN_HASH = "pin_hash"
         const val KEY_PIN_WRAP = "pin_wrap"
         const val KEY_PIN_ITERATIONS = "pin_iterations"
+        const val KEY_BIO_ONLY = "bio_only"
         const val KEY_RECOVERY_QUESTION_ID = "recovery_question_id"
         const val KEY_RECOVERY_SALT = "recovery_salt"
         const val KEY_RECOVERY_HASH = "recovery_hash"
