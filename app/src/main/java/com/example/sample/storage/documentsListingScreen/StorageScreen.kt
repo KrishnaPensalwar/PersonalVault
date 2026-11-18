@@ -38,7 +38,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.sample.common.EmptyState
 import com.example.sample.common.ErrorState
 import com.example.sample.common.LoadingState
 import com.example.sample.navigation.Destinations
@@ -153,17 +152,7 @@ fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
                 image = Icons.Default.Storage,
                 onRetry = { viewModel.getDocuments(searchQuery) },
             )
-            is StorageUiState.Success -> if (
-                state.documents.isEmpty()
-            ) EmptyState(
-                title = if (searchQuery.isBlank() && categoryFilter == "All Files") {
-                    "No documents saved yet"
-                } else {
-                    "No matching documents"
-                },
-                description = "Tap + to add a document",
-                image = Icons.Default.Storage,
-            ) else StorageDocumentList(
+            is StorageUiState.Success -> StorageDocumentList(
                 documents = state.documents,
                 searchQuery = searchQuery,
                 categoryFilter = categoryFilter,

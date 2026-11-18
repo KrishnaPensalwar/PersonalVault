@@ -1,5 +1,6 @@
 package com.example.sample.security.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,7 +47,12 @@ fun PinKeypad(
             Spacer(Modifier.weight(1f))
             KeypadNumber('0', Modifier.weight(1f)) { onDigit('0') }
             KeypadAction(Modifier.weight(1f), enabled = true, onClick = onBackspace) {
-                Icon(Icons.AutoMirrored.Filled.Backspace, "Delete digit", tint = VaultText, modifier = Modifier.size(25.dp))
+                Box(
+                    Modifier.size(28.dp).background(Color(0xFF1D4ED8), RoundedCornerShape(50)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.Close, "Delete digit", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
             }
         }
     }
@@ -81,7 +86,7 @@ private fun KeypadAction(
         enabled = enabled,
         modifier = modifier.height(72.dp),
         shape = RoundedCornerShape(22.dp),
-        color = if (enabled) Color(0xFFF0F2F5) else VaultCard,
+        color = if (enabled) Color(0xFFE7F0FF) else VaultCard,
     ) {
         Box(contentAlignment = Alignment.Center) { content() }
     }

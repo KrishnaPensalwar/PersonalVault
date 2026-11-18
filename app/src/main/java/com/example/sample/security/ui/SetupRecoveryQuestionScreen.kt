@@ -1,6 +1,7 @@
 package com.example.sample.security.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -60,6 +62,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SetupRecoveryQuestionScreen(
     error: String?,
+    saving: Boolean = false,
     onBack: () -> Unit,
     onComplete: (recoveryQuestionId: Int, recoveryAnswer: String) -> Unit,
 ) {
@@ -81,6 +84,7 @@ fun SetupRecoveryQuestionScreen(
         requester.bringIntoView()
     }
 
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(VaultBackground).imePadding()) {
         VaultHeader("Setup Recovery Question", onBack)
         Column(
@@ -193,6 +197,7 @@ fun SetupRecoveryQuestionScreen(
             }
             Spacer(Modifier.height(14.dp))
             VaultPrimaryButton("Complete Setup & Lock Vault", Icons.Default.Lock) {
+                if (saving) return@VaultPrimaryButton
                 localError = when {
                     answer.isBlank() -> "Answer is required."
                     !matches -> "Recovery answers do not match."
@@ -204,6 +209,15 @@ fun SetupRecoveryQuestionScreen(
 //                Text("Choose a custom question instead", color = VaultSecondary)
 //            }
             Spacer(Modifier.height(12.dp))
+        }
+    }
+        if (saving) {
+            Box(
+                Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.72f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = VaultNavy)
+            }
         }
     }
 }

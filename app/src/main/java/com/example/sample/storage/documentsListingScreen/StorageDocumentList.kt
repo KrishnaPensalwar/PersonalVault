@@ -4,6 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -45,8 +46,9 @@ internal fun StorageDocumentList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
+            StorageSearchField(searchQuery, onSearchChange, onClearSearch)
+
             if(categoryChips.size > 1) {
-                StorageSearchField(searchQuery, onSearchChange, onClearSearch)
 
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -77,6 +79,7 @@ internal fun StorageDocumentList(
                     },
                     description = "Tap + to add a document",
                     image = Icons.Default.Storage,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         } else {

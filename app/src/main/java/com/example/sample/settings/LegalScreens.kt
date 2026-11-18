@@ -39,7 +39,7 @@ fun PrivacyScreen() {
 @Composable
 private fun LegalWebView(url: String) {
     var failed by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxSize().padding(WindowInsets.statusBars.asPaddingValues())) {
+    Box(Modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->

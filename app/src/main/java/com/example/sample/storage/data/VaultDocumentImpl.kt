@@ -37,13 +37,19 @@ class VaultDocumentImpl(
         vaultDocumentDao.deleteDocumentsByMemberId(memberId)
     }
 
-    suspend fun updateDocumentDetails(id: String, name: String) {
-        val existing = vaultDocumentDao.getDocumentById(id)
+    suspend fun updateDocumentDetails(
+        id: String,
+        name: String,
+        category: String,
+        sizeBytes: Long? = null,
+    ) {
+        val key = VaultSession.require()
         vaultDocumentDao.updateLabels(
             id,
-            VaultCrypto.sealString(VaultSession.require(), name),
-            existing?.category ?: "",
+            VaultCrypto.sealString(key, name),
+            VaultCrypto.sealString(key, category),
         )
+        if (sizeBytes != null) vaultDocumentDao.updateSize(id, sizeBytes)
     }
 
     private fun open(source: Flow<List<VaultDocumentEntity>>): Flow<List<VaultDocumentEntity>> =

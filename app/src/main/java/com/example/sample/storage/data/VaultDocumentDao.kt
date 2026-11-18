@@ -45,6 +45,9 @@ interface VaultDocumentDao {
     @Query("UPDATE vault_documents SET name = :name, category = :category WHERE id = :id")
     suspend fun updateLabels(id: String, name: String, category: String)
 
+    @Query("UPDATE vault_documents SET sizeBytes = :sizeBytes WHERE id = :id")
+    suspend fun updateSize(id: String, sizeBytes: Long)
+
     @Query("DELETE FROM vault_documents WHERE id = :id")
     suspend fun deleteDocumentById(id: String)
 

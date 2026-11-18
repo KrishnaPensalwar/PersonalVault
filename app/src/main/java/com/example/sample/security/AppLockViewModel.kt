@@ -120,8 +120,16 @@ class AppLockViewModel(
             _lockState.update { LockScreenState.PinSetup(error) }
             return
         }
-        repository.savePin(pin, recoveryQuestionId, recoveryAnswer)
-        afterSecretInstalled()
+        if ((_lockState.value as? LockScreenState.PinSetup)?.saving == true) return
+        _lockState.update { LockScreenState.PinSetup(saving = true) }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                repository.savePin(pin, recoveryQuestionId, recoveryAnswer)
+                afterSecretInstalled()
+            } catch (_: Exception) {
+                _lockState.update { LockScreenState.PinSetup(error = "Could not save the vault PIN.") }
+            }
+        }
     }
 
     fun onPinEntrySubmit(pin: String) {

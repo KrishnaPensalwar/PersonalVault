@@ -63,6 +63,7 @@ fun LockScreen(viewModel: AppLockViewModel) {
 
                 is LockScreenState.PinSetup -> PinSetupFlow(
                     error = current.error,
+                    saving = current.saving,
                     onSubmit = viewModel::onPinSetupSubmit,
                 )
 

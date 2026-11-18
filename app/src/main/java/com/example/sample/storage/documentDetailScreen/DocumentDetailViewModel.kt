@@ -40,10 +40,16 @@ class DocumentDetailViewModel(
         }
     }
 
-    fun updateDocumentName(id: String, newName: String, onSuccess: (() -> Unit)? = null) {
+    fun updateDocumentName(
+        id: String,
+        newName: String,
+        category: String,
+        sizeBytes: Long? = null,
+        onSuccess: (() -> Unit)? = null,
+    ) {
         viewModelScope.launch {
             try {
-                repository.updateDocumentDetails(id, newName)
+                repository.updateDocumentDetails(id, newName, category, sizeBytes)
                 loadDocument(id)
                 onSuccess?.invoke()
             } catch (e: Exception) {

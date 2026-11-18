@@ -1,5 +1,6 @@
 package com.example.sample.security.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,11 +22,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Brush
+import com.example.sample.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +49,9 @@ import androidx.compose.ui.unit.sp
 
 private enum class UnlockChoice { DEVICE, PIN, NONE }
 
+private val ChoiceBlue = Color(0xFF1D4ED8)
+private val ChoiceTitle = Color(0xFF0B1F44)
+
 @Composable
 fun ChooseUnlockScreen(
     error: String?,
@@ -49,31 +60,57 @@ fun ChooseUnlockScreen(
     onNone: () -> Unit,
 ) {
     var choice by rememberSaveable { mutableStateOf(UnlockChoice.DEVICE) }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFFF7FBFF), Color(0xFFEAF2FF)))),
+    ) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(VaultBackground)
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
-        Surface(shape = CircleShape, color = Color(0xFFE7EEF9)) {
+        Surface(shape = RoundedCornerShape(50), color = Color(0xFFE7F0FF)) {
             Text(
                 "STEP 1 OF 2",
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                color = VaultNavy,
-                fontSize = 12.sp,
+                color = ChoiceBlue,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
             )
         }
-        Spacer(Modifier.height(14.dp))
-        Text("How should this vault open?", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF14315C), lineHeight = 34.sp)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(16.dp))
+        Row(verticalAlignment = Alignment.Top) {
+            Text(
+                "How should this vault open?",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = ChoiceTitle,
+                lineHeight = 36.sp,
+                modifier = Modifier.weight(1f),
+            )
+            Image(
+                painterResource(R.drawable.ic_vault_shield),
+                contentDescription = null,
+                modifier = Modifier.size(108.dp),
+                contentScale = ContentScale.Fit,
+            )
+        }
         Text(
             "You can change this later in Settings.",
-            color = VaultSecondary,
-            fontSize = 14.sp,
+            color = Color(0xFF6B7280),
+            fontSize = 15.sp,
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
+        Box(
+            Modifier
+                .width(72.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(50))
+                .background(ChoiceBlue),
+        )
+        Spacer(Modifier.height(18.dp))
         ChoiceCard(
             selected = choice == UnlockChoice.DEVICE,
             icon = Icons.Default.Fingerprint,
@@ -94,7 +131,7 @@ fun ChooseUnlockScreen(
         Spacer(Modifier.height(10.dp))
         ChoiceCard(
             selected = choice == UnlockChoice.NONE,
-            icon = Icons.Default.LockOpen,
+            icon = Icons.Default.Lock,
             title = "No lock",
             body = "The vault opens without a fingerprint, phone PIN, or vault PIN.",
             badge = null,
@@ -118,14 +155,24 @@ fun ChooseUnlockScreen(
             Spacer(Modifier.height(10.dp))
             Text(it, color = VaultRed, fontSize = 13.sp)
         }
-        Spacer(Modifier.height(18.dp))
-        VaultPrimaryButton("Continue", Icons.AutoMirrored.Filled.ArrowForward) {
-            when (choice) {
-                UnlockChoice.DEVICE -> onDevice()
-                UnlockChoice.PIN -> onPin()
-                UnlockChoice.NONE -> onNone()
-            }
+        Spacer(Modifier.height(22.dp))
+        Button(
+            onClick = {
+                when (choice) {
+                    UnlockChoice.DEVICE -> onDevice()
+                    UnlockChoice.PIN -> onPin()
+                    UnlockChoice.NONE -> onNone()
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = ChoiceBlue, contentColor = Color.White),
+        ) {
+            Text("Continue", fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+            Spacer(Modifier.width(8.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(18.dp))
         }
+    }
     }
 }
 
@@ -138,28 +185,44 @@ private fun ChoiceCard(
     badge: String?,
     onClick: () -> Unit,
 ) {
-    val border = if (selected) VaultNavy else Color(0xFFE3E8F0)
+    val border = if (selected) ChoiceBlue else Color.Transparent
     Surface(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .border(1.5.dp, border, RoundedCornerShape(18.dp))
+            .border(if (selected) 1.5.dp else 0.dp, border, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         color = Color.White,
+        shadowElevation = 1.dp,
     ) {
-        Row(Modifier.padding(14.dp)) {
-            Icon(icon, null, tint = VaultNavy, modifier = Modifier.size(28.dp))
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF3F6FB)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, null, tint = ChoiceBlue, modifier = Modifier.size(22.dp))
+            }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, fontWeight = FontWeight.Bold, color = VaultText, modifier = Modifier.weight(1f))
-                }
-                if (badge != null) {
-                    Surface(shape = RoundedCornerShape(8.dp), color = Color(0xFFE7F6EF)) {
-                        Text(badge, color = Color(0xFF067647), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                    Text(title, fontWeight = FontWeight.Bold, color = ChoiceTitle, fontSize = 15.sp)
+                    if (badge != null) {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(shape = RoundedCornerShape(50), color = Color(0xFFE5F8EC)) {
+                            Row(
+                                Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("✓ ", color = Color(0xFF128A3E), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(badge, color = Color(0xFF128A3E), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                     }
                 }
-                Text(body, color = VaultSecondary, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                Text(body, color = Color(0xFF6B7280), fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
             }
             BoxRadio(selected)
         }
@@ -172,12 +235,11 @@ private fun BoxRadio(selected: Boolean) {
         Modifier
             .size(22.dp)
             .clip(CircleShape)
-            .border(2.dp, if (selected) VaultNavy else Color(0xFFC5CAD6), CircleShape)
-            .background(if (selected) VaultNavy else Color.Transparent),
+            .border(2.dp, if (selected) ChoiceBlue else Color(0xFFD0D5DD), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (selected) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(Color.White))
+            Box(Modifier.size(12.dp).clip(CircleShape).background(ChoiceBlue))
         }
     }
 }
