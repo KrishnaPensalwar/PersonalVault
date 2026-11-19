@@ -46,7 +46,6 @@ internal fun StorageDocumentList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            StorageSearchField(searchQuery, onSearchChange, onClearSearch)
 
             if(categoryChips.size > 1) {
 
@@ -85,6 +84,9 @@ internal fun StorageDocumentList(
         } else {
             item { RecordsHeader(filtered.size, sortAz, onToggleSort) }
 
+            StorageSearchField(searchQuery, onSearchChange, onClearSearch)
+
+                            
             items(filtered, key = { it.id }) { doc ->
                 StorageDocumentCard(
                     document = doc,
