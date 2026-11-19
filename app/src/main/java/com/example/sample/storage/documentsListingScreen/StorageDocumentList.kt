@@ -82,9 +82,11 @@ internal fun StorageDocumentList(
                 )
             }
         } else {
-            item { RecordsHeader(filtered.size, sortAz, onToggleSort) }
+             item {
+                StorageSearchField(searchQuery, onSearchChange, onClearSearch)
 
-            StorageSearchField(searchQuery, onSearchChange, onClearSearch)
+                RecordsHeader(filtered.size, sortAz, onToggleSort) 
+            }
 
                             
             items(filtered, key = { it.id }) { doc ->
