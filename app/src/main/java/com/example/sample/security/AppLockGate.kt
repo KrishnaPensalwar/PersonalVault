@@ -25,7 +25,7 @@ import androidx.compose.runtime.setValue
  * [AppLockConfig.backgroundLockTimeout].
  */
 @Composable
-fun AppLockGate(content: @Composable () -> Unit) {
+fun AppLockGate(lockReady: Boolean = true,content: @Composable () -> Unit) {
     val viewModel: AppLockViewModel = koinViewModel()
     val installState: InstallState = koinInject()
     val state by viewModel.lockState.collectAsStateWithLifecycle()
