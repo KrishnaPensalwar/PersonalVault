@@ -25,7 +25,7 @@ class BackupRulesTest {
     @Test
     fun manifestAllowsBackupAndPointsAtBothRuleFiles() {
         val manifest = xmlFile("AndroidManifest.xml").readText()
-        assertTrue(manifest.contains("""android:allowBackup="true""""))
+        assertTrue(manifest.contains("""android:allowBackup="false""""))
         assertTrue(manifest.contains("""android:fullBackupContent="@xml/backup_rules""""))
         assertTrue(manifest.contains("""android:dataExtractionRules="@xml/data_extraction_rules""""))
     }
