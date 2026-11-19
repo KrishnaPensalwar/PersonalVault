@@ -32,7 +32,7 @@ class MainActivity : FragmentActivity() {
             SampleTheme(darkTheme = false) {
                 var splashDone by rememberSaveable { mutableStateOf(false) }
                 Box(Modifier.fillMaxSize()) {
-                    AppLockGate {
+                    AppLockGate(lockReady = splashDone) {
                         AppNavigation()
                     }
                     if (!splashDone) {
