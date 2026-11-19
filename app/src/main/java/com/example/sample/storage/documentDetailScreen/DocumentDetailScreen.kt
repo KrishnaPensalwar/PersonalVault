@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,7 +55,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.storage.data.VaultDocumentEntity
+import com.example.sample.storage.documentsListingScreen.CategoryRow
+import com.example.sample.storage.documentsListingScreen.OtherCategory
+import com.example.sample.storage.documentsListingScreen.SaveCategories
 import com.example.sample.storage.loadDocumentPreview
+import com.example.sample.storage.overwriteTextDocument
+import com.example.sample.storage.readTextDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,10 +102,12 @@ fun DocumentDetailScreen(
                 is DocumentDetailUiState.Success -> {
                     DocumentDetailContent(
                         doc = state.document,
-                        onUpdateName = { newName ->
-                            viewModel.updateDocumentName(id, newName, onSuccess = {
+                        onUpdateName = { newName, category, sizeBytes ->
+                            viewModel.updateDocumentName(id, newName, category, sizeBytes, onSuccess = {
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Document name updated successfully")
+                                    snackbarHostState.showSnackbar(
+                                        if (sizeBytes != null) "Note updated" else "Document name updated successfully",
+                                    )
                                 }
                             })
                         },
@@ -128,22 +137,46 @@ fun DocumentDetailScreen(
 @Composable
 private fun DocumentDetailContent(
     doc: VaultDocumentEntity,
-    onUpdateName: (String) -> Unit,
+    onUpdateName: (String, String, Long?) -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
     onViewFullDocument: () -> Unit
 ) {
+    val isNote = doc.mimeType == "text/plain"
+    val presetCategory = doc.category.isEmpty() || doc.category in SaveCategories
+    var selectedCategory by remember(doc.category) {
+        mutableStateOf(if (presetCategory) doc.category else OtherCategory)
+    }
+    var customCategory by remember(doc.category) {
+        mutableStateOf(if (presetCategory) "" else doc.category)
+    }
+    val resolvedCategory =
+        if (selectedCategory == OtherCategory) customCategory.trim() else selectedCategory.trim()
     var editableName by remember(doc.name) { mutableStateOf(doc.name) }
+    var originalBody by remember(doc.relativePath, doc.sizeBytes) { mutableStateOf<String?>(null) }
+    var editableBody by remember(doc.relativePath, doc.sizeBytes) { mutableStateOf("") }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val nameChanged = editableName.isNotBlank() && editableName != doc.name
+    val categoryChanged = resolvedCategory != doc.category
+    val bodyChanged = originalBody != null && editableBody != originalBody
+    val canSave = nameChanged || categoryChanged || (bodyChanged && editableBody.isNotBlank())
+    val dirty = nameChanged || categoryChanged || bodyChanged
 
-    BackHandler(enabled = nameChanged) {
+    BackHandler(enabled = dirty) {
         showDiscardDialog = true
     }
 
-    val context = LocalContext.current
+    LaunchedEffect(doc.relativePath, doc.sizeBytes, isNote) {
+        if (!isNote) return@LaunchedEffect
+        val text = withContext(Dispatchers.IO) { readTextDocument(context, doc.relativePath) }
+        originalBody = text
+        editableBody = text
+    }
+
     val preview by produceState<Bitmap?>(
         initialValue = null,
         key1 = doc.relativePath,
@@ -157,7 +190,7 @@ private fun DocumentDetailContent(
     SetTopBar(
         title = doc.name,
         onBackClick = {
-            if (nameChanged) {
+            if (dirty) {
                 showDiscardDialog = true
             } else {
                 onBack()
@@ -175,34 +208,48 @@ private fun DocumentDetailContent(
     )
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(16.dp))
 
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .clickable { onViewFullDocument() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (preview != null) {
-                    Image(
-                        bitmap = preview!!.asImageBitmap(),
-                        contentDescription = "Document Preview",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                        contentDescription = "Document Preview",
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+            if (isNote) {
+                OutlinedTextField(
+                    value = editableBody,
+                    onValueChange = { editableBody = it },
+                    label = { Text("Note") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp),
+                    enabled = originalBody != null,
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .fillMaxWidth()
+                        .height(280.dp)
+                        .clickable { onViewFullDocument() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (preview != null) {
+                        Image(
+                            bitmap = preview!!.asImageBitmap(),
+                            contentDescription = "Document Preview",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+                            contentDescription = "Document Preview",
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -211,6 +258,13 @@ private fun DocumentDetailContent(
             DocumentDetailRow("Name", editableName, enabled = true, onValueChange = {
                 editableName = it
             })
+
+            CategoryRow(
+                category = selectedCategory,
+                customCategory = customCategory,
+                onCategoryChange = { selectedCategory = it },
+                onCustomCategoryChange = { customCategory = it },
+            )
 
             Spacer(Modifier.height(16.dp))
 
@@ -227,12 +281,21 @@ private fun DocumentDetailContent(
 
             Button(
                 onClick = {
-                    onUpdateName(editableName)
+                    val body = editableBody
+                    val size = if (bodyChanged) body.toByteArray().size.toLong() else null
+                    scope.launch {
+                        if (bodyChanged) {
+                            withContext(Dispatchers.IO) {
+                                overwriteTextDocument(context, doc.relativePath, body)
+                            }
+                        }
+                        onUpdateName(editableName, resolvedCategory, size)
+                    }
                 },
-                enabled = nameChanged,
+                enabled = canSave,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Update Name")
+                Text(if (isNote || categoryChanged) "Save" else "Update Name")
             }
         }
     }

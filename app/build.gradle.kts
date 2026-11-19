@@ -6,13 +6,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sample"
+    namespace = "com.vaulet.app"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.sample"
+        applicationId = "com.vaulet.app"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -76,4 +76,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.fragment.ktx)
+    implementation("androidx.datastore:datastore-preferences:1.1.2")
+
 }

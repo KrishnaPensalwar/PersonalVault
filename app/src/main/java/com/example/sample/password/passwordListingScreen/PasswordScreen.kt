@@ -59,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import com.example.sample.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sample.common.EmptyState
 import com.example.sample.common.ErrorState
@@ -68,6 +67,7 @@ import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.navigation.SetTopBar
 import com.example.sample.password.PasswordCard
+import com.vaulet.app.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

@@ -22,7 +22,7 @@ sealed interface Destinations : NavKey {
             is FamilyMemberProfile -> "Member Profile"
             is Settings -> "Settings"
             is ChangePin -> "Change Vault PIN"
-            is Unlock -> "Unlock"
+            is Unlock -> "Unlock Method"
             is Terms -> "Terms of Service"
             is Privacy -> "Privacy Policy"
         }

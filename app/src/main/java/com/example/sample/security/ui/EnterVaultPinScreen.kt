@@ -16,12 +16,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.res.stringResource
-import com.example.sample.R
+import com.vaulet.app.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.sp
 fun EnterVaultPinScreen(
     error: String?,
     failedAttempts: Int,
+    checking: Boolean = false,
     onSubmit: (String) -> Unit,
     onForgotPin: () -> Unit,
     onBiometric: (() -> Unit)? = null,
@@ -47,6 +49,13 @@ fun EnterVaultPinScreen(
     var pin by remember { mutableStateOf("") }
     val appName = stringResource(R.string.app_name)
     val scheme = MaterialTheme.colorScheme
+
+    if (checking) {
+        Box(Modifier.fillMaxSize().background(scheme.background), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     Column(
         Modifier.fillMaxSize().background(scheme.background).padding(horizontal = 20.dp),
@@ -86,10 +95,7 @@ fun EnterVaultPinScreen(
             onDigit = { digit ->
                 if (pin.length >= PinLength) return@PinKeypad
                 pin += digit
-                if (pin.length == PinLength) {
-                    onSubmit(pin)
-                    pin = ""
-                }
+                if (pin.length == PinLength) onSubmit(pin)
             },
             onBackspace = { if (pin.isNotEmpty()) pin = pin.dropLast(1) },
             onBiometric = onBiometric,

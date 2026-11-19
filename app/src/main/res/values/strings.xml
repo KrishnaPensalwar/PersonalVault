@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Sample</string>
+    <string name="app_name">Vaulet</string>
+    <string name="splash_tagline">Your Personal Digital Vault</string>
 </resources>

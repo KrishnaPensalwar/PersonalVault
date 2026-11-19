@@ -45,6 +45,16 @@ fun AppNavigation(
 ) {
     val backStack = rememberNavBackStack(Destinations.Storage)
     val currentDestination = backStack.last() as Destinations
+
+    fun popBack() {
+        if (backStack.size <= 1) return
+        val current = backStack.last() as Destinations
+        if (current.showBottomBar) {
+            while (backStack.size > 1) backStack.removeLastOrNull()
+        } else {
+            backStack.removeLastOrNull()
+        }
+    }
     val topBarState = rememberTopBarState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -60,11 +70,7 @@ fun AppNavigation(
                 currentDestination = currentDestination,
                 topBarState = topBarState,
                 onOpenSettings = { backStack.add(Destinations.Settings) },
-                onBack = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    }
-                }
+                onBack = { popBack() }
             )
         },
         bottomBar = {
@@ -88,11 +94,7 @@ fun AppNavigation(
             NavDisplay(
                 backStack = backStack,
                 modifier = modifier.padding(innerPadding),
-                onBack = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    }
-                },
+                onBack = { popBack() },
                 entryProvider = entryProvider {
 
 //                    entry<Destinations.Dashboard> {

@@ -85,3 +85,13 @@ fun writeTextDocument(context: Context, text: String): String {
     com.example.sample.security.DocumentSealing.write(destination, text.toByteArray(Charsets.UTF_8))
     return "vault/documents/${destination.name}"
 }
+
+fun readTextDocument(context: Context, relativePath: String): String {
+    val file = File(context.filesDir, relativePath)
+    return com.example.sample.security.DocumentSealing.read(file).toString(Charsets.UTF_8)
+}
+
+fun overwriteTextDocument(context: Context, relativePath: String, text: String) {
+    val file = File(context.filesDir, relativePath)
+    com.example.sample.security.DocumentSealing.write(file, text.toByteArray(Charsets.UTF_8))
+}

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sample.security.data.AppLockRepository
 import com.example.sample.security.data.UnlockMethod
 import javax.crypto.Cipher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,8 @@ class AppLockViewModel(
 
     fun biometricEnrollCipher(): Cipher? = repository.biometricEnrollCipher()
 
+    fun allowsDeviceCredential(): Boolean = repository.unlockMethod() != UnlockMethod.PIN
+
     fun onBiometricUnlock(cipher: Cipher?) {
         if (cipher != null && repository.completeBiometricUnlock(cipher)) {
             unlock()
@@ -72,8 +75,11 @@ class AppLockViewModel(
             }
             return
         }
+        if (repository.unlockMethod() == UnlockMethod.PIN && repository.isPinSetupComplete()) {
+            showPinEntry()
+            return
+        }
         viewModelScope.launch { _events.emit(LockScreenEvent.Message(message)) }
-        if (repository.unlockMethod() == UnlockMethod.PIN && repository.isPinSetupComplete()) showPinEntry()
     }
 
     fun onChoosePin() {
@@ -114,8 +120,16 @@ class AppLockViewModel(
             _lockState.update { LockScreenState.PinSetup(error) }
             return
         }
-        repository.savePin(pin, recoveryQuestionId, recoveryAnswer)
-        afterSecretInstalled()
+        if ((_lockState.value as? LockScreenState.PinSetup)?.saving == true) return
+        _lockState.update { LockScreenState.PinSetup(saving = true) }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                repository.savePin(pin, recoveryQuestionId, recoveryAnswer)
+                afterSecretInstalled()
+            } catch (_: Exception) {
+                _lockState.update { LockScreenState.PinSetup(error = "Could not save the vault PIN.") }
+            }
+        }
     }
 
     fun onPinEntrySubmit(pin: String) {
@@ -130,19 +144,28 @@ class AppLockViewModel(
             }
             return
         }
-        if (repository.verifyPin(pin)) {
-            repository.clearPinFailures()
-            afterSecretInstalled()
-        } else {
-            val attempts = repository.registerFailedPin()
-            val until = repository.pinLockedUntil()
-            val error = if (until > System.currentTimeMillis()) {
-                "Too many attempts. Locked for 10 minutes"
+        _lockState.update {
+            LockScreenState.PinEntry(
+                failedAttempts = repository.failedPinAttempts(),
+                lockedUntilEpochMs = lockedUntil,
+                checking = true,
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            if (repository.verifyPin(pin)) {
+                repository.clearPinFailures()
+                afterSecretInstalled()
             } else {
-                "Incorrect PIN"
-            }
-            _lockState.update {
-                LockScreenState.PinEntry(error, attempts, until)
+                val attempts = repository.registerFailedPin()
+                val until = repository.pinLockedUntil()
+                val error = if (until > System.currentTimeMillis()) {
+                    "Too many attempts. Locked for 10 minutes"
+                } else {
+                    "Incorrect PIN"
+                }
+                _lockState.update {
+                    LockScreenState.PinEntry(error, attempts, until)
+                }
             }
         }
     }
@@ -219,7 +242,6 @@ class AppLockViewModel(
                     else LockScreenState.ChooseUnlock()
                 UnlockMethod.PIN ->
                     if (!repository.isPinSetupComplete()) LockScreenState.PinSetup()
-                    else if (biometricChecker.isAvailable() && repository.hasBiometricWrap()) LockScreenState.Biometric
                     else LockScreenState.PinEntry(
                         failedAttempts = repository.failedPinAttempts(),
                         lockedUntilEpochMs = repository.pinLockedUntil(),
@@ -230,7 +252,11 @@ class AppLockViewModel(
     }
 
     private fun afterSecretInstalled() {
-        if (biometricChecker.isAvailable() && !repository.hasBiometricWrap() && repository.biometricEnrollCipher() != null) {
+        if (repository.unlockMethod() != UnlockMethod.PIN &&
+            biometricChecker.isAvailable() &&
+            !repository.hasBiometricWrap() &&
+            repository.biometricEnrollCipher() != null
+        ) {
             _lockState.update { LockScreenState.BiometricEnroll }
         } else {
             unlock()

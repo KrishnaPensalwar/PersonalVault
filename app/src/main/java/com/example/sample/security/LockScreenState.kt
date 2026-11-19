@@ -9,8 +9,9 @@ sealed interface LockScreenState {
         val error: String? = null,
         val failedAttempts: Int = 0,
         val lockedUntilEpochMs: Long = 0L,
+        val checking: Boolean = false,
     ) : LockScreenState
-    data class PinSetup(val error: String? = null) : LockScreenState
+    data class PinSetup(val error: String? = null, val saving: Boolean = false) : LockScreenState
     /** Named `RecoveryPrompt`, not `RecoveryQuestion`, to avoid colliding with the top-level [com.example.sample.security.RecoveryQuestion] enum it wraps. */
     data class RecoveryPrompt(val question: RecoveryQuestion, val error: String? = null) : LockScreenState
     data class SetNewPin(val error: String? = null) : LockScreenState

@@ -17,7 +17,7 @@ class AppLockRepositoryImplTest {
     fun setUp() {
         VaultCrypto.newKeyIterations = 1_000
         VaultSession.clear()
-        repository = AppLockRepositoryImpl(FakeSharedPreferences())
+        repository = AppLockRepositoryImpl(FakeSecureStorageManager())
     }
 
     @Test

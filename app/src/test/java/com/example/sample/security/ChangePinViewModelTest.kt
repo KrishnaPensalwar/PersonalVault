@@ -5,7 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import com.example.sample.security.data.AppLockRepositoryImpl
-import com.example.sample.security.data.FakeSharedPreferences
+import com.example.sample.security.data.FakeSecureStorageManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Before
 import org.junit.Test
 
@@ -24,6 +27,7 @@ class ChangePinViewModelTest {
         val viewModel = ChangePinViewModel(repository)
 
         viewModel.onSubmit("123456", "654321", "654321")
+        viewModel.awaitResult()
 
         assertTrue(viewModel.state.value.saved)
         assertFalse(repository.verifyPin("123456"))
@@ -38,6 +42,7 @@ class ChangePinViewModelTest {
         val viewModel = ChangePinViewModel(repository)
 
         viewModel.onSubmit("000000", "654321", "654321")
+        viewModel.awaitResult()
 
         assertEquals("Incorrect PIN", viewModel.state.value.error)
         assertTrue(repository.verifyPin("123456"))
@@ -45,4 +50,10 @@ class ChangePinViewModelTest {
     }
 }
 
-private class MemoryLock : AppLockRepository by AppLockRepositoryImpl(FakeSharedPreferences())
+private fun ChangePinViewModel.awaitResult() = runBlocking {
+    withTimeout(15_000) {
+        while (state.value.saving) delay(20)
+    }
+}
+
+private class MemoryLock : AppLockRepository by AppLockRepositoryImpl(FakeSecureStorageManager())

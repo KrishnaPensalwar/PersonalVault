@@ -15,40 +15,43 @@ import javax.crypto.spec.GCMParameterSpec
  */
 class AndroidDekKeystore {
 
-    fun encryptCipher(): Cipher? = try {
+    fun encryptCipher(biometricOnly: Boolean = false): Cipher? = try {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey())
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey(biometricOnly))
         cipher
     } catch (_: Exception) {
         null
     }
 
-    fun decryptCipher(iv: ByteArray): Cipher? = try {
+    fun decryptCipher(iv: ByteArray, biometricOnly: Boolean = false): Cipher? = try {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(128, iv))
+        cipher.init(Cipher.DECRYPT_MODE, secretKey(biometricOnly), GCMParameterSpec(128, iv))
         cipher
     } catch (_: Exception) {
         null
     }
 
-    private fun secretKey(): SecretKey {
+    private fun secretKey(biometricOnly: Boolean): SecretKey {
+        val alias = if (biometricOnly) BIO_ALIAS else ALIAS
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        val existing = keyStore.getKey(ALIAS, null) as? SecretKey
+        val existing = keyStore.getKey(alias, null) as? SecretKey
         if (existing != null) return existing
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val builder = KeyGenParameterSpec.Builder(
-            ALIAS,
+            alias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
             .setUserAuthenticationRequired(true)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !biometricOnly) {
             builder.setUserAuthenticationParameters(
                 0,
                 KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
             )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
         } else {
             @Suppress("DEPRECATION")
             builder.setUserAuthenticationValidityDurationSeconds(-1)
@@ -95,6 +98,7 @@ class AndroidDekKeystore {
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
         const val ALIAS = "vault_dek_wrap"
+        const val BIO_ALIAS = "vault_dek_wrap_biometric"
         const val OPEN_ALIAS = "vault_dek_wrap_open"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
     }
