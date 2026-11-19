@@ -42,6 +42,10 @@ fun AppLockGate(content: @Composable () -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    if (!lockReady) {
+        return
+    }
+
     if (!welcomeSeen && state is LockScreenState.ChooseUnlock) {
         WelcomeScreen {
             installState.markWelcomeSeen()
