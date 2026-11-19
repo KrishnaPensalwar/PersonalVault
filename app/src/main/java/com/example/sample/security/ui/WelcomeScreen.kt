@@ -51,12 +51,14 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.sample.R
+import com.vaulet.app.R
 import com.example.sample.navigation.AppTopBar
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.rememberTopBarState
@@ -127,10 +129,11 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Fortress Vault",
+                "Vaulet",
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
                 color = WelcomeTitle,
+                fontFamily = FontFamily.Cursive
             )
             Text(
                 "Your records stay on this phone.",

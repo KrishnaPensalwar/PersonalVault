@@ -1,7 +1,5 @@
 package com.example.sample.di
 
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.example.sample.data.local.VaultDatabase
 import com.example.sample.dashboard.DashboardViewModel
 import com.example.sample.family.memberProfile.FamilyMemberProfileViewModel
@@ -21,6 +19,8 @@ import com.example.sample.storage.data.VaultDocumentDao
 import com.example.sample.storage.data.VaultDocumentImpl
 import com.example.sample.security.AndroidDekKeystore
 import com.example.sample.security.InstallState
+import com.example.sample.security.SecureStorageManager
+import com.example.sample.security.SecureStorageManagerImpl
 import com.example.sample.security.AppLockViewModel
 import com.example.sample.security.ChangePinViewModel
 import com.example.sample.security.BiometricAvailabilityChecker
@@ -73,18 +73,8 @@ val appModule = module {
 
     // ── App Lock ──────────────────────────────────────────────────────────────
 
-    single(qualifier = org.koin.core.qualifier.named("appLockPrefs")) {
-        val context = androidContext()
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            "app_lock_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
+    single<SecureStorageManager> {
+        SecureStorageManagerImpl(androidContext())
     }
 
     single {
@@ -101,7 +91,7 @@ val appModule = module {
     single<AppLockRepository> {
         val migrator = get<VaultMigrator>()
         AppLockRepositoryImpl(
-            prefs = get(qualifier = org.koin.core.qualifier.named("appLockPrefs")),
+            storageManager = get(),
             keystore = AndroidDekKeystore(),
             onKeyInstalled = migrator::migrateNow,
         )

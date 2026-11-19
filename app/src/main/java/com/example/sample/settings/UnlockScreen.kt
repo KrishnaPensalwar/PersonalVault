@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.sample.R
 import com.example.sample.navigation.Destinations
 import com.example.sample.navigation.LocalBackStack
 import com.example.sample.navigation.SetTopBar
@@ -60,6 +58,7 @@ import com.example.sample.security.ui.VaultBackground
 import com.example.sample.security.ui.VaultRed
 import com.example.sample.security.ui.VaultSecondary
 import com.example.sample.security.ui.VaultText
+import com.vaulet.app.R
 import org.koin.compose.koinInject
 
 @Composable

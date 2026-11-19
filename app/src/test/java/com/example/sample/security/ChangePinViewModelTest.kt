@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import com.example.sample.security.data.AppLockRepositoryImpl
-import com.example.sample.security.data.FakeSharedPreferences
+import com.example.sample.security.data.FakeSecureStorageManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -56,4 +56,4 @@ private fun ChangePinViewModel.awaitResult() = runBlocking {
     }
 }
 
-private class MemoryLock : AppLockRepository by AppLockRepositoryImpl(FakeSharedPreferences())
+private class MemoryLock : AppLockRepository by AppLockRepositoryImpl(FakeSecureStorageManager())
